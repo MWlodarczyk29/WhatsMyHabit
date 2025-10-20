@@ -49,6 +49,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation("androidx.datastore:datastore-preferences:1.1.0")
+    implementation("com.squareup.moshi:moshi:1.15.0") // do konwersji JSON
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
