@@ -45,6 +45,13 @@ import com.wlodarczyk.whatsmyhabit.model.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import com.wlodarczyk.whatsmyhabit.model.HabitNotificationReceiver
+import java.util.Calendar
+
 
 
 class MainActivity : ComponentActivity() {
@@ -52,6 +59,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        NotificationUtils.createNotificationChannel(this)
         setContent {
             val sampleHabits = remember { mutableStateListOf<Habit>() }
             val context = LocalContext.current
@@ -78,7 +86,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         CenterAlignedTopAppBar(
-                            title = { Text("Moje nawyki")}
+                            title = { Text("Moje nawyki") }
                         )
                     },
                     floatingActionButton = {
@@ -87,64 +95,97 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Column(modifier = Modifier.padding(innerPadding)) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    ) {
                         val doneCount = sampleHabits.count { it.done }
-                        Text("Liczba ukończonych nawyków: $doneCount / ${sampleHabits.size}",
+                        Text(
+                            "Liczba ukończonych nawyków: $doneCount / ${sampleHabits.size}",
                             modifier = Modifier.padding(8.dp)
                         )
+                        HabitList(
+                            habits = sampleHabits,
+                            modifier = Modifier.weight(1f)
+                                .padding(bottom = 70.dp),
+                            scope = scope
+                        )
                     }
-                    HabitList(habits = sampleHabits, modifier = Modifier.fillMaxHeight(), scope = scope)
-                    }
-                }
-
-                if (showDialog) {
-                    AlertDialog( //tworzy standardowe okienko dialogowe w Compose
-                        onDismissRequest = { showDialog = false },
-                        title = { Text("Dodaj nowy nawyk") },
-                        text = {
-                            Column {
-                                OutlinedTextField( //pole do wpisania nazwy i godziny nawyku
-                                    value = name,
-                                    onValueChange = { name = it },
-                                    label = { Text("Nazwa nawyku") }
-                                )
-                                OutlinedTextField(
-                                    value = time,
-                                    onValueChange = { time = it },
-                                    label = { Text("Godzina (HH:MM)") }
-                                )
-                            }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                if (name.isNotBlank() && timeRegex.matches(time)) {
-                                    val newHabit = Habit(sampleHabits.size + 1, name, time, done = false)
-                                    sampleHabits.add(newHabit)
-                                    scope.launch {
-                                        HabitDataStore.saveHabits(context, sampleHabits.toList())
-                                    }
-                                    Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT)
-                                        .show()
-                                    name = ""
-                                    time = ""
-                                    showDialog = false
-                                } else {
-                                    Toast.makeText(context, "Niepoprawna godzina", Toast.LENGTH_SHORT).show()
+                    if (showDialog) {
+                        AlertDialog( //tworzy standardowe okienko dialogowe w Compose
+                            onDismissRequest = { showDialog = false },
+                            title = { Text("Dodaj nowy nawyk") },
+                            text = {
+                                Column {
+                                    OutlinedTextField( //pole do wpisania nazwy i godziny nawyku
+                                        value = name,
+                                        onValueChange = { name = it },
+                                        label = { Text("Nazwa nawyku") }
+                                    )
+                                    OutlinedTextField(
+                                        value = time,
+                                        onValueChange = { time = it },
+                                        label = { Text("Godzina (HH:MM)") }
+                                    )
                                 }
-                            }) {
-                                Text("Dodaj")
+                            },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    if (name.isNotBlank() && timeRegex.matches(time)) {
+                                        val newHabit = Habit(sampleHabits.size + 1, name, time, done = false)
+                                        sampleHabits.add(newHabit)
+
+                                        val parts = time.split(":")
+                                        val hour = parts[0].toInt()
+                                        val minute = parts[1].toInt()
+
+                                        val calendar = Calendar.getInstance().apply {
+                                            set(Calendar.HOUR_OF_DAY, hour)
+                                            set(Calendar.MINUTE, minute)
+                                            set(Calendar.SECOND, 0)
+                                            if (before(Calendar.getInstance())) add(Calendar.DAY_OF_MONTH, 1)
+                                        }
+
+                                        val intent = Intent(context, HabitNotificationReceiver::class.java).apply {
+                                            putExtra("habit_name", name)
+                                            putExtra("habit_time", time)
+                                        }
+
+                                        val pendingIntent = PendingIntent.getBroadcast(
+                                            context,
+                                            name.hashCode(),
+                                            intent,
+                                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                        )
+
+                                        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                                        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+
+                                        scope.launch { HabitDataStore.saveHabits(context, sampleHabits.toList()) }
+
+                                        Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                                        name = ""
+                                        time = ""
+                                        showDialog = false
+                                    } else {
+                                        Toast.makeText(context, "Niepoprawna godzina", Toast.LENGTH_SHORT).show()
+                                    }
+                                }) {
+                                    Text("Dodaj")
+                                }
                             }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDialog = false }) {
-                                Text("Anuluj")
+                            ,
+                            dismissButton = {
+                                TextButton(onClick = { showDialog = false }) {
+                                    Text("Anuluj")
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
     }
+}
 
     @Composable
     fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope) {
@@ -154,8 +195,9 @@ class MainActivity : ComponentActivity() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically){
                         Checkbox(
