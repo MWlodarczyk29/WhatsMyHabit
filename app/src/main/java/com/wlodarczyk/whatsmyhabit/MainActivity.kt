@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,7 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.model.Habit
@@ -83,7 +87,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    HabitList(habits = sampleHabits, modifier = Modifier.padding(innerPadding), scope = scope)
+                    Column(modifier = Modifier.padding(innerPadding)) {
+                        val doneCount = sampleHabits.count { it.done }
+                        Text("Liczba ukończonych nawyków: $doneCount / ${sampleHabits.size}",
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    HabitList(habits = sampleHabits, modifier = Modifier.fillMaxHeight(), scope = scope)
                     }
                 }
 
@@ -108,7 +118,7 @@ class MainActivity : ComponentActivity() {
                         confirmButton = {
                             TextButton(onClick = {
                                 if (name.isNotBlank() && timeRegex.matches(time)) {
-                                    val newHabit = Habit(sampleHabits.size + 1, name, time)
+                                    val newHabit = Habit(sampleHabits.size + 1, name, time, done = false)
                                     sampleHabits.add(newHabit)
                                     scope.launch {
                                         HabitDataStore.saveHabits(context, sampleHabits.toList())
@@ -140,13 +150,22 @@ class MainActivity : ComponentActivity() {
     fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope) {
         val context = LocalContext.current
         LazyColumn(modifier = modifier) { //lazy column wyswietla liste przewijana pionowo
-            items(habits) { habit ->
+            items(habits, key = {it.id}) { habit ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        Checkbox(
+                            checked = habit.done,
+                            onCheckedChange = { checked ->
+                                habit.done = checked
+                                scope.launch { HabitDataStore.saveHabits(context, habits.toList())}
+                            }
+                        )
+                    }
                     Text("${habit.name} o ${habit.time}")
                     TextButton(onClick = {
                         habits.remove(habit)

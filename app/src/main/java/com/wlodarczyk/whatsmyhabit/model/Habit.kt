@@ -1,8 +1,12 @@
 package com.wlodarczyk.whatsmyhabit.model
 
-//data class to klasa, ktorej android uzywa do przechowywania danych (automatycznie tworzy funkcje do porownania, kopiowania itp)
-data class Habit (
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+data class Habit(
     val id: Int,
     val name: String,
-    val time: String
+    val time: String,
+    var done: Boolean = false
 )
