@@ -8,5 +8,5 @@ data class Habit(
     val id: Int,
     val name: String,
     val time: String,
-    var done: Boolean = false
+    var done: Boolean = false,
 )

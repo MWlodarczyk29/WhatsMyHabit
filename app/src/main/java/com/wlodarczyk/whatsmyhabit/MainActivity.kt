@@ -158,7 +158,15 @@ class MainActivity : ComponentActivity() {
                                         )
 
                                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                                        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                                        @Suppress("DEPRECATION")
+                                        alarmManager.setInexactRepeating(
+                                            AlarmManager.RTC_WAKEUP,
+                                            calendar.timeInMillis,
+                                            AlarmManager.INTERVAL_DAY,
+                                            pendingIntent
+                                        )
+
+                                        scope.launch { HabitDataStore.saveHabits(context, sampleHabits.toList()) }
 
                                         scope.launch { HabitDataStore.saveHabits(context, sampleHabits.toList()) }
 
@@ -190,7 +198,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope) {
         val context = LocalContext.current
-        LazyColumn(modifier = modifier) { //lazy column wyswietla liste przewijana pionowo
+        LazyColumn(modifier = modifier) {
             items(habits, key = {it.id}) { habit ->
                 Row(
                     modifier = Modifier
@@ -210,6 +218,16 @@ class MainActivity : ComponentActivity() {
                     }
                     Text("${habit.name} o ${habit.time}")
                     TextButton(onClick = {
+                        val intent = Intent(context, HabitNotificationReceiver::class.java)
+                        val pendingIntent = PendingIntent.getBroadcast(
+                            context,
+                            habit.name.hashCode(),
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+
+                        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                        alarmManager.cancel(pendingIntent)
                         habits.remove(habit)
                        scope.launch { HabitDataStore.saveHabits(context, habits.toList())}
                         Toast.makeText(context, "Usunięto nawyk", Toast.LENGTH_SHORT).show()
@@ -221,3 +239,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+
+//cyklicznosc powtarzania nawykow, zmienic time regex na zegar (powiedzmy) albo spinnery,
+// albo alarm manager; dodac ekran ustawien gdzie bedzie mozliwa zmiana jezyka na angielski i dodatkowo zmiana motywu aplikacji
+// na ciemny lub jasny w zaleznosci od ustawien systemowych telefonu. Mozna rowniez dodac statystyki np. przy dodawaniu nawyku mozna dodac +5 pkt i te punkty po wykoaniu nawyku nam sie sumuja na dole aplikacji
