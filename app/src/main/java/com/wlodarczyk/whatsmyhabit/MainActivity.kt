@@ -1,14 +1,21 @@
 package com.wlodarczyk.whatsmyhabit
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,29 +44,46 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.app.TimePickerDialog
-import android.content.Context
-import android.content.Intent
-import com.wlodarczyk.whatsmyhabit.model.HabitNotificationReceiver
 import java.util.Calendar
+import android.Manifest
 
 
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Toast.makeText(this, "Pozwolenie na powiadomienia przyznane!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Odmówiono pozwolenia na powiadomienia.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun askForNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        askForNotificationPermission()
         NotificationUtils.createNotificationChannel(this)
         setContent {
             val sampleHabits = remember { mutableStateListOf<Habit>() }
@@ -116,7 +140,9 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         Column(
-                            modifier = Modifier.fillMaxSize().padding(innerPadding)
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
                         ) {
                             val doneCount = sampleHabits.count { it.done }
                             Text(
@@ -125,7 +151,8 @@ class MainActivity : ComponentActivity() {
                             )
                             HabitList(
                                 habits = sampleHabits,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
                                     .padding(bottom = 70.dp),
                                 scope = scope
                             )
@@ -142,7 +169,9 @@ class MainActivity : ComponentActivity() {
                                             label = { Text("Nazwa nawyku") }
                                         )
                                         Row(
-                                            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 16.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
@@ -182,13 +211,14 @@ class MainActivity : ComponentActivity() {
                                                 context,
                                                 HabitNotificationReceiver::class.java
                                             ).apply {
+                                                putExtra("habit_id", newHabit.id)
                                                 putExtra("habit_name", newHabit.name)
                                                 putExtra("habit_time", newHabit.time)
                                             }
 
                                             val pendingIntent = PendingIntent.getBroadcast(
                                                 context,
-                                                newHabit.name.hashCode(),
+                                                newHabit.id,
                                                 intent,
                                                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                                             )
@@ -275,22 +305,23 @@ class MainActivity : ComponentActivity() {
                     Text("${habit.name} o ${habit.time}")
                     TextButton(onClick = {
                         val intent = Intent(context, HabitNotificationReceiver::class.java).apply {
+                            putExtra("habit_id", habit.id)
                             putExtra("habit_name", habit.name)
                             putExtra("habit_time", habit.time)
                         }
 
                         val pendingIntent = PendingIntent.getBroadcast(
                             context,
-                            habit.name.hashCode(),
+                            habit.id,
                             intent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
 
                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                         alarmManager.cancel(pendingIntent)
-                        val currentList = habits.toMutableList()
-                        currentList.remove(habit)
-                        updateAndSaveHabits(currentList)
+
+                        habits.remove(habit)
+                        updateAndSaveHabits(habits.toList())
                         Toast.makeText(context, "Usunięto nawyk", Toast.LENGTH_SHORT).show()
                     }) {
                         Text("Usuń")
@@ -301,7 +332,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-//cyklicznosc powtarzania nawykow, zmienic time regex na zegar (powiedzmy) albo spinnery,
-// albo alarm manager; dodac ekran ustawien gdzie bedzie mozliwa zmiana jezyka na angielski i dodatkowo zmiana motywu aplikacji
+//dodac ekran ustawien gdzie bedzie mozliwa zmiana jezyka na angielski i dodatkowo zmiana motywu aplikacji
 // na ciemny lub jasny w zaleznosci od ustawien systemowych telefonu. Mozna rowniez dodac statystyki np. przy dodawaniu nawyku mozna dodac +5 pkt i te punkty po wykoaniu nawyku nam sie sumuja na dole aplikacji

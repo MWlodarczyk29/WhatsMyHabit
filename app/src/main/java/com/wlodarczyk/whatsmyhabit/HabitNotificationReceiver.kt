@@ -1,14 +1,15 @@
-package com.wlodarczyk.whatsmyhabit.model
+package com.wlodarczyk.whatsmyhabit
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.wlodarczyk.whatsmyhabit.R
+import com.wlodarczyk.whatsmyhabit.NotificationUtils
 
 class HabitNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        val habitId = intent?.getIntExtra("habit_id", 0) ?: 0
         val habitName = intent?.getStringExtra("habit_name") ?: "Twój nawyk"
         val time = intent?.getStringExtra("habit_time") ?: ""
 
@@ -20,6 +21,13 @@ class HabitNotificationReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(habitName.hashCode(), notification)
+        NotificationUtils.createNotificationChannel(context)
+
+        val notificationManager = NotificationManagerCompat.from(context)
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            notificationManager.notify(habitId, notification)
+        }
+
     }
 }
