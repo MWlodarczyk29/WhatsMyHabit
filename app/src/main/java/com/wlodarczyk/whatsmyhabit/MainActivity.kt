@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,11 +53,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import android.Manifest
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.collectAsState
+import com.wlodarczyk.whatsmyhabit.model.SettingsDataStore
 
 
 
 class MainActivity : ComponentActivity() {
 
+    private val alarmManager: AlarmManager by lazy {
+        getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    }
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -82,13 +89,19 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         askForNotificationPermission()
         NotificationUtils.createNotificationChannel(this)
         setContent {
             val sampleHabits = remember { mutableStateListOf<Habit>() }
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
+            val alarmManager = this.alarmManager
+            val themePreference by SettingsDataStore.getThemePreference(context).collectAsState(initial = "SYSTEM")
+            val useDarkTheme = when (themePreference) {
+                "LIGHT" -> false
+                "DARK" -> true
+                else -> isSystemInDarkTheme()
+            }
 
             LaunchedEffect(Unit) {
                 try {
@@ -97,14 +110,12 @@ class MainActivity : ComponentActivity() {
                         sampleHabits.addAll(list)
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Błąd wczytywania danych", Toast.LENGTH_SHORT).show()
                 }
             }
 
             var showDialog by remember { mutableStateOf(false) }
             var name by remember { mutableStateOf("") }
             var time by remember { mutableStateOf("") }
-            val timeRegex = Regex("^([01]\\d|2[0-3]):([0-5]\\d)$")
 
             var showTimePicker by remember { mutableStateOf(false) }
             var calendar = Calendar.getInstance()
@@ -125,14 +136,24 @@ class MainActivity : ComponentActivity() {
             }
 
 
-                WhatsMyHabitTheme {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        topBar = {
-                            CenterAlignedTopAppBar(
-                                title = { Text("Moje nawyki") }
-                            )
-                        },
+            WhatsMyHabitTheme(darkTheme = useDarkTheme) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        CenterAlignedTopAppBar(
+                            title = { Text("Moje nawyki") },
+                            actions = {
+                                IconButton(onClick = {
+                                    context.startActivity(Intent(context, SettingsActivity::class.java))
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "Ustawienia"
+                                    )
+                                }
+                            }
+                        )
+                    },
                         floatingActionButton = {
                             FloatingActionButton(onClick = { showDialog = true }) {
                                 Icon(Icons.Default.Add, contentDescription = "Dodaj nawyk")
@@ -154,16 +175,17 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(bottom = 70.dp),
-                                scope = scope
+                                scope = scope,
+                                alarmManager = alarmManager
                             )
                         }
                         if (showDialog) {
-                            AlertDialog( //tworzy standardowe okienko dialogowe w Compose
+                            AlertDialog(
                                 onDismissRequest = { showDialog = false },
                                 title = { Text("Dodaj nowy nawyk") },
                                 text = {
                                     Column {
-                                        OutlinedTextField( //pole do wpisania nazwy i godziny nawyku
+                                        OutlinedTextField(
                                             value = name,
                                             onValueChange = { name = it },
                                             label = { Text("Nazwa nawyku") }
@@ -223,9 +245,7 @@ class MainActivity : ComponentActivity() {
                                                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                                             )
 
-                                            val alarmManager =
-                                                context.getSystemService(ALARM_SERVICE) as AlarmManager
-                                            alarmManager.setRepeating(
+                                            this@MainActivity.alarmManager.setRepeating(
                                                 AlarmManager.RTC_WAKEUP,
                                                 calendar.timeInMillis,
                                                 AlarmManager.INTERVAL_DAY,
@@ -272,7 +292,7 @@ class MainActivity : ComponentActivity() {
 }
 
     @Composable
-    fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope) {
+    fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope, alarmManager: AlarmManager) {
         val context = LocalContext.current
 
         fun updateAndSaveHabits(updatedList: List<Habit>) {
@@ -317,7 +337,6 @@ class MainActivity : ComponentActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
 
-                        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                         alarmManager.cancel(pendingIntent)
 
                         habits.remove(habit)
@@ -331,6 +350,3 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-//dodac ekran ustawien gdzie bedzie mozliwa zmiana jezyka na angielski i dodatkowo zmiana motywu aplikacji
-// na ciemny lub jasny w zaleznosci od ustawien systemowych telefonu. Mozna rowniez dodac statystyki np. przy dodawaniu nawyku mozna dodac +5 pkt i te punkty po wykoaniu nawyku nam sie sumuja na dole aplikacji
