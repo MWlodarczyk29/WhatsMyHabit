@@ -76,6 +76,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val requestExactAlarmPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                Toast.makeText(this, "Uprawnienie do dokładnych alarmów przyznane.", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Odmówiono uprawnienia do dokładnych alarmów.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun askForExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent().apply {
+                    action = android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                }.also {
+                    requestExactAlarmPermissionLauncher.launch(it)
+                }
+            }
+        }
+    }
+
     private fun askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -90,6 +114,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askForNotificationPermission()
+        askForExactAlarmPermission()
         NotificationUtils.createNotificationChannel(this)
         setContent {
             val sampleHabits = remember { mutableStateListOf<Habit>() }
@@ -215,42 +240,7 @@ class MainActivity : ComponentActivity() {
                                             )
                                             sampleHabits.add(newHabit)
 
-                                            val parts = time.split(":")
-                                            val hour = parts[0].toInt()
-                                            val minute = parts[1].toInt()
-
-                                            val calendar = Calendar.getInstance().apply {
-                                                set(Calendar.HOUR_OF_DAY, hour)
-                                                set(Calendar.MINUTE, minute)
-                                                set(Calendar.SECOND, 0)
-                                                if (before(Calendar.getInstance())) add(
-                                                    Calendar.DAY_OF_MONTH,
-                                                    1
-                                                )
-                                            }
-
-                                            val intent = Intent(
-                                                context,
-                                                HabitNotificationReceiver::class.java
-                                            ).apply {
-                                                putExtra("habit_id", newHabit.id)
-                                                putExtra("habit_name", newHabit.name)
-                                                putExtra("habit_time", newHabit.time)
-                                            }
-
-                                            val pendingIntent = PendingIntent.getBroadcast(
-                                                context,
-                                                newHabit.id,
-                                                intent,
-                                                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                                            )
-
-                                            this@MainActivity.alarmManager.setRepeating(
-                                                AlarmManager.RTC_WAKEUP,
-                                                calendar.timeInMillis,
-                                                AlarmManager.INTERVAL_DAY,
-                                                pendingIntent
-                                            )
+                                            scheduleNotification(context, newHabit)
 
                                             scope.launch {
                                                 HabitDataStore.saveHabits(
@@ -290,6 +280,75 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private fun scheduleNotification(context: Context, newHabit: Habit) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    val intent = Intent(context, HabitNotificationReceiver::class.java).apply {
+        putExtra("habit_id", newHabit.id)
+        putExtra("habit_name", newHabit.name)
+        putExtra("habit_time", newHabit.time)
+    }
+
+    val pendingIntent = PendingIntent.getBroadcast(
+        context,
+        newHabit.id,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val timeParts = newHabit.time.split(":").map {
+        it.toInt()
+    }
+    val calendar = Calendar.getInstance().apply {
+        timeInMillis = System.currentTimeMillis()
+        set(Calendar.HOUR_OF_DAY, timeParts[0])
+        set(Calendar.MINUTE, timeParts[1])
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+
+        if (before(Calendar.getInstance())) {
+            add(Calendar.DATE, 1)
+        }
+    }
+
+    when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+                Toast.makeText(context, "Powiadomienia mogą być opóźnione. Nadaj uprawnienia do alarmów w ustawieniach.", Toast.LENGTH_LONG).show()
+            }
+        }
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        }
+        else -> {
+            alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+            )
+        }
+    }
+    Toast.makeText(context, "Alarm zaplanowany na ${calendar.time}", Toast.LENGTH_LONG).show()
+}
+
+
 
     @Composable
     fun HabitList(habits: SnapshotStateList<Habit>, modifier: Modifier = Modifier, scope: CoroutineScope, alarmManager: AlarmManager) {
@@ -334,7 +393,7 @@ class MainActivity : ComponentActivity() {
                             context,
                             habit.id,
                             intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
 
                         alarmManager.cancel(pendingIntent)
