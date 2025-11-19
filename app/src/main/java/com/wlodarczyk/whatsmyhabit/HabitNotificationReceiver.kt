@@ -1,5 +1,6 @@
 package com.wlodarczyk.whatsmyhabit
 
+import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -7,36 +8,21 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import android.app.AlarmManager
 
 class HabitNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         Toast.makeText(context, "Receiver uruchomiony!", Toast.LENGTH_LONG).show()
-        NotificationUtils.createNotificationChannel(context)
 
         val habitId = intent?.getIntExtra("habit_id", 0) ?: 0
         val habitName = intent?.getStringExtra("habit_name") ?: "Twój nawyk"
         val time = intent?.getStringExtra("habit_time") ?: ""
-
-        val notification = NotificationCompat.Builder(context, NotificationUtils.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Czas na nawyk!")
-            .setContentText("$habitName")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .build()
-
-        val notificationManager = NotificationManagerCompat.from(context)
-
         if (androidx.core.content.ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d("HabitReceiver", "Wysyłanie powiadomienia dla nawyku: $habitName")
-            notificationManager.notify(habitId, notification)
+            Log.d("HabitReceiver", "Wywoływanie NotificationUtils.showHabitNotification dla: $habitName")
+            NotificationUtils.showHabitNotification(context, habitName, habitId)
         } else {
             Log.e("HabitReceiver", "Brak uprawnień do wysłania powiadomienia!")
         }
@@ -75,7 +61,6 @@ class HabitNotificationReceiver : BroadcastReceiver() {
         }
 
         when {
-            // Android 12 (S) i nowsze
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(
@@ -85,7 +70,6 @@ class HabitNotificationReceiver : BroadcastReceiver() {
                     )
                     Log.d("HabitReceiver", "Zaplanowano dokładny alarm na następny dzień.")
                 } else {
-                    // Opcja zapasowa, jeśli brak uprawnień - nie powoduje crasha
                     alarmManager.set(
                         AlarmManager.RTC_WAKEUP,
                         calendar.timeInMillis,
