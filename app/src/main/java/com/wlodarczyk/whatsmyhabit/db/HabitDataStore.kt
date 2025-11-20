@@ -1,4 +1,4 @@
-package com.wlodarczyk.whatsmyhabit.model
+package com.wlodarczyk.whatsmyhabit.db
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
@@ -9,6 +9,7 @@ import com.squareup.moshi.Types
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.wlodarczyk.whatsmyhabit.model.Habit
 
 private val Context.dataStore by preferencesDataStore("habits_store")
 

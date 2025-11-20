@@ -1,4 +1,4 @@
-package com.wlodarczyk.whatsmyhabit.model
+package com.wlodarczyk.whatsmyhabit.db
 
 import android.content.Context
 import androidx.datastore.core.DataStore

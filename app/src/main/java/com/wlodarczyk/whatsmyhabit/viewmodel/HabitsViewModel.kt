@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wlodarczyk.whatsmyhabit.model.Habit
-import com.wlodarczyk.whatsmyhabit.model.HabitDataStore
+import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

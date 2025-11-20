@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.wlodarczyk.whatsmyhabit.model.SettingsDataStore
+import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme

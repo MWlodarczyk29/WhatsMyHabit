@@ -7,7 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import com.wlodarczyk.whatsmyhabit.model.SettingsDataStore
+import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.screens.MainScreen
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
