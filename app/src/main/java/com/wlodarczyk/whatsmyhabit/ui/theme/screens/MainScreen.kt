@@ -2,6 +2,9 @@ package com.wlodarczyk.whatsmyhabit.ui.theme.screens
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,6 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,23 +29,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
-import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitListItem
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitCard
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitStatsHeader
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(viewModel: HabitsViewModel) {
     val context = LocalContext.current
     val habits by viewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Moje nawyki") },
@@ -53,7 +62,8 @@ fun MainScreen(viewModel: HabitsViewModel) {
                             contentDescription = "Ustawienia"
                         )
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
@@ -73,12 +83,10 @@ fun MainScreen(viewModel: HabitsViewModel) {
             )
 
             LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(bottom = 70.dp)
+                modifier = Modifier.weight(1f)
             ) {
                 items(habits, key = { it.id }) { habit ->
-                    HabitListItem(
+                    HabitCard(
                         habit = habit,
                         onCheckedChange = { checked ->
                             viewModel.toggleHabitDone(habit.id, checked)
