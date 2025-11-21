@@ -3,6 +3,7 @@ package com.wlodarczyk.whatsmyhabit
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,31 +13,36 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.isSystemInDarkTheme
 
 class SettingsActivity : ComponentActivity() {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -49,9 +55,16 @@ class SettingsActivity : ComponentActivity() {
             }
 
             WhatsMyHabitTheme(darkTheme = useDarkTheme) {
-                SettingsScreen(onBackClicked = {
-                    finish()
-                }
+                SettingsScreen(
+                    currentTheme = themePreference,
+                    onThemeChange = { newTheme ->
+                        (this as ComponentActivity).lifecycleScope.launch {
+                            SettingsDataStore.saveThemePreference(context, newTheme)
+                        }
+                    },
+                    onBackClicked = {
+                        finish()
+                    }
                 )
             }
         }
@@ -60,10 +73,12 @@ class SettingsActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBackClicked: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val themePreference by SettingsDataStore.getThemePreference(context).collectAsState(initial = "SYSTEM")
+fun SettingsScreen(
+    currentTheme: String,
+    onThemeChange: (String) -> Unit,
+    onBackClicked: () -> Unit
+) {
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -75,6 +90,11 @@ fun SettingsScreen(onBackClicked: () -> Unit) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showInfoDialog = true }) {
+                Icon(Icons.Default.Info, contentDescription = "Informacje o aplikacji")
+            }
         }
     ) { innerPadding ->
         Column(
@@ -93,19 +113,15 @@ fun SettingsScreen(onBackClicked: () -> Unit) {
                         .fillMaxWidth()
                         .height(56.dp)
                         .selectable(
-                            selected = (themePreference == key),
-                            onClick = {
-                                scope.launch {
-                                    SettingsDataStore.saveThemePreference(context, key)
-                                }
-                            },
+                            selected = (currentTheme == key),
+                            onClick = { onThemeChange(key) },
                             role = Role.RadioButton
                         )
                         .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
-                        selected = (themePreference == key),
+                        selected = (currentTheme == key),
                         onClick = null
                     )
                     Text(
@@ -115,5 +131,25 @@ fun SettingsScreen(onBackClicked: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (showInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showInfoDialog = false },
+            title = { Text("O aplikacji ,,What's my habit?''") },
+            text = {
+                Text(
+                    ",,What's my habit?'' jest aplikacją, która pomaga w budowaniu i śledzeniu codziennych nawyków. " +
+                            "Możesz dodawać nowe nawyki, ustawiać dla nich przypomnienia i monitorować swoje postępy. " +
+                            "Celem aplikacji jest wspieranie Cię w regularności i osiąganiu zamierzonych celów. " +
+                    "Powodzenia!"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showInfoDialog = false }) {
+                    Text("Rozumiem")
+                }
+            }
+        )
     }
 }

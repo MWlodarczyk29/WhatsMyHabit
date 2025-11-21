@@ -3,8 +3,9 @@ package com.wlodarczyk.whatsmyhabit.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
+import com.wlodarczyk.whatsmyhabit.model.Habit
+import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ class HabitsViewModel(
 
     init {
         loadHabits()
+        checkAndResetHabits()
     }
 
     private fun loadHabits() {
@@ -31,12 +33,42 @@ class HabitsViewModel(
         }
     }
 
-    fun addHabit(name: String, time: String) {
+    /**
+     * sprawdza i resetuje nawyki, które powinny być zresetowane
+     */
+    fun checkAndResetHabits() {
+        viewModelScope.launch {
+            val updatedList = _habits.value.map { habit ->
+                if (habit.shouldReset()) {
+                    habit.copy(done = false)
+                } else {
+                    habit
+                }
+            }
+
+            if (updatedList != _habits.value) {
+                _habits.value = updatedList
+                HabitDataStore.saveHabits(context, updatedList)
+            }
+        }
+    }
+
+    /**
+     * zwraca tylko nawyki aktywne dzisiaj (zgodnie z ich częstotliwością)
+     */
+    fun getActiveTodayHabits(): List<Habit> {
+        return _habits.value.filter { it.isActiveToday() }
+    }
+
+    fun addHabit(name: String, time: String, frequency: HabitFrequency = HabitFrequency.DAILY) {
         val newHabit = Habit(
             id = System.currentTimeMillis().toInt(),
             name = name,
             time = time,
-            done = false
+            done = false,
+            frequency = frequency,
+            createdDate = System.currentTimeMillis(),
+            lastCompletedDate = null
         )
 
         val updatedList = _habits.value + newHabit
@@ -63,7 +95,10 @@ class HabitsViewModel(
     fun toggleHabitDone(habitId: Int, isDone: Boolean) {
         val updatedList = _habits.value.map { habit ->
             if (habit.id == habitId) {
-                habit.copy(done = isDone)
+                habit.copy(
+                    done = isDone,
+                    lastCompletedDate = if (isDone) System.currentTimeMillis() else habit.lastCompletedDate
+                )
             } else {
                 habit
             }
@@ -76,5 +111,7 @@ class HabitsViewModel(
         }
     }
 
-    fun getDoneCount(): Int = _habits.value.count { it.done }
+    fun getDoneCount(): Int = getActiveTodayHabits().count { it.done }
+
+    fun getTotalActiveTodayCount(): Int = getActiveTodayHabits().size
 }

@@ -6,10 +6,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.wlodarczyk.whatsmyhabit.model.Habit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 private val Context.dataStore by preferencesDataStore("habits_store")
 

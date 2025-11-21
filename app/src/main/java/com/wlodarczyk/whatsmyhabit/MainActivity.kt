@@ -8,10 +8,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
-import com.wlodarczyk.whatsmyhabit.ui.theme.screens.MainScreen
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
+import com.wlodarczyk.whatsmyhabit.ui.theme.screens.MainScreen
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
+import com.wlodarczyk.whatsmyhabit.utils.WorkManagerScheduler
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 
 class MainActivity : ComponentActivity() {
@@ -26,6 +27,8 @@ class MainActivity : ComponentActivity() {
         permissionManager.requestExactAlarmPermission()
 
         NotificationUtils.createNotificationChannel(this)
+
+        WorkManagerScheduler.scheduleDailyReset(this)
 
         setContent {
             val context = LocalContext.current

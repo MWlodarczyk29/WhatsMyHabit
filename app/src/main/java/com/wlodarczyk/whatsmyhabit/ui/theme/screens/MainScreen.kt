@@ -2,8 +2,6 @@ package com.wlodarczyk.whatsmyhabit.ui.theme.screens
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,24 +11,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitCard
@@ -44,7 +30,16 @@ fun MainScreen(viewModel: HabitsViewModel) {
     val habits by viewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
+    val activeTodayHabits = remember(habits) {
+        habits.filter { it.isActiveToday() }
+    }
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
+    // sprawdź i zresetuj nawyki przy każdym otwarciu ekranu
+    LaunchedEffect(Unit) {
+        viewModel.checkAndResetHabits()
+    }
 
     Scaffold(
         modifier = Modifier
@@ -79,13 +74,22 @@ fun MainScreen(viewModel: HabitsViewModel) {
         ) {
             HabitStatsHeader(
                 doneCount = viewModel.getDoneCount(),
-                totalCount = habits.size
+                totalCount = viewModel.getTotalActiveTodayCount()
             )
+
+            if (activeTodayHabits.isEmpty()) {
+                Text(
+                    text = "Brak nawyków na dziś. Dodaj nowy nawyk!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                items(habits, key = { it.id }) { habit ->
+                items(activeTodayHabits, key = { it.id }) { habit ->
                     HabitCard(
                         habit = habit,
                         onCheckedChange = { checked ->
@@ -107,8 +111,8 @@ fun MainScreen(viewModel: HabitsViewModel) {
         if (showDialog) {
             AddHabitDialog(
                 onDismiss = { showDialog = false },
-                onConfirm = { name, time ->
-                    viewModel.addHabit(name, time)
+                onConfirm = { name, time, frequency ->
+                    viewModel.addHabit(name, time, frequency)
                     Toast.makeText(
                         context,
                         "Dodano nawyk",
