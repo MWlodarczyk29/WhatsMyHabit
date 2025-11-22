@@ -33,9 +33,6 @@ class HabitsViewModel(
         }
     }
 
-    /**
-     * sprawdza i resetuje nawyki, które powinny być zresetowane
-     */
     fun checkAndResetHabits() {
         viewModelScope.launch {
             val updatedList = _habits.value.map { habit ->
@@ -53,9 +50,6 @@ class HabitsViewModel(
         }
     }
 
-    /**
-     * zwraca tylko nawyki aktywne dzisiaj (zgodnie z ich częstotliwością)
-     */
     fun getActiveTodayHabits(): List<Habit> {
         return _habits.value.filter { it.isActiveToday() }
     }

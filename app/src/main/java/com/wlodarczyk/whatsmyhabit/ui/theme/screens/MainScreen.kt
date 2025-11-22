@@ -18,17 +18,30 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
+import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitCard
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitStatsHeader
+import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun MainScreen(viewModel: HabitsViewModel) {
+fun MainScreen(
+    viewModel: HabitsViewModel,
+    permissionManager: PermissionManager
+) {
     val context = LocalContext.current
+
     val habits by viewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+
+    var showNotificationExplanation by remember { mutableStateOf(false) }
+    var showAlarmExplanation by remember { mutableStateOf(false) }
+    var showNotificationDeniedDialog by remember { mutableStateOf(false) }
+    var showAlarmDeniedDialog by remember { mutableStateOf(false) }
+
+    var pendingHabitData by remember { mutableStateOf<Triple<String, String, HabitFrequency>?>(null) }
 
     val activeTodayHabits = remember(habits) {
         habits.filter { it.isActiveToday() }
@@ -36,7 +49,6 @@ fun MainScreen(viewModel: HabitsViewModel) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
-    // sprawdź i zresetuj nawyki przy każdym otwarciu ekranu
     LaunchedEffect(Unit) {
         viewModel.checkAndResetHabits()
     }
@@ -112,13 +124,307 @@ fun MainScreen(viewModel: HabitsViewModel) {
             AddHabitDialog(
                 onDismiss = { showDialog = false },
                 onConfirm = { name, time, frequency ->
-                    viewModel.addHabit(name, time, frequency)
-                    Toast.makeText(
-                        context,
-                        "Dodano nawyk",
-                        Toast.LENGTH_SHORT
-                    ).show()
                     showDialog = false
+                    pendingHabitData = Triple(name, time, frequency)
+
+                    val addHabit = {
+                        viewModel.addHabit(name, time, frequency)
+                        Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                        pendingHabitData = null
+                    }
+
+                    if (!permissionManager.hasNotificationPermission()) {
+                        showNotificationExplanation = true
+                    } else if (!permissionManager.hasExactAlarmPermission()) {
+                        showAlarmExplanation = true
+                    } else {
+                        addHabit()
+                    }
+                }
+            )
+        }
+
+        if (showNotificationExplanation) {
+            AlertDialog(
+                onDismissRequest = {
+                    showNotificationExplanation = false
+                    pendingHabitData?.let { (name, time, frequency) ->
+                        viewModel.addHabit(name, time, frequency)
+                        Toast.makeText(
+                            context,
+                            "Nawyk dodany bez przypomnień",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        pendingHabitData = null
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text("Przypomnienia o nawykach")
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Aby aplikacja mogła wysyłać Ci przypomnienia o nawykach o wybranej godzinie, potrzebne jest uprawnienie do powiadomień.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "\n✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego nawyku\n✓ Zwiększysz szansę na sukces",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showNotificationExplanation = false
+                            permissionManager.requestNotificationPermission { granted ->
+                                if (granted) {
+                                    if (!permissionManager.hasExactAlarmPermission()) {
+                                        showAlarmExplanation = true
+                                    } else {
+                                        pendingHabitData?.let { (name, time, frequency) ->
+                                            viewModel.addHabit(name, time, frequency)
+                                            Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                                            pendingHabitData = null
+                                        }
+                                    }
+                                } else {
+                                    showNotificationDeniedDialog = true
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Przyznaj uprawnienie")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showNotificationExplanation = false
+                            pendingHabitData?.let { (name, time, frequency) ->
+                                viewModel.addHabit(name, time, frequency)
+                                Toast.makeText(
+                                    context,
+                                    "Nawyk dodany bez przypomnień",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                pendingHabitData = null
+                            }
+                        }
+                    ) {
+                        Text("Pomiń")
+                    }
+                }
+            )
+        }
+
+        if (showNotificationDeniedDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showNotificationDeniedDialog = false
+                    pendingHabitData?.let { (name, time, frequency) ->
+                        viewModel.addHabit(name, time, frequency)
+                        pendingHabitData = null
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = {
+                    Text("Brak uprawnień do powiadomień")
+                },
+                text = {
+                    Text(
+                        "Bez uprawnienia do powiadomień aplikacja nie będzie mogła wysyłać przypomnień o nawykach.\n\n" +
+                                "⚠️ Konsekwencje:\n" +
+                                "• Nie otrzymasz powiadomień o czasie nawyku\n" +
+                                "• Musisz sam pamiętać o swoich nawykach\n" +
+                                "• Może to obniżyć skuteczność budowania nawyków\n\n" +
+                                "Możesz włączyć powiadomienia później w ustawieniach systemowych aplikacji."
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            permissionManager.openAppSettings()
+                            showNotificationDeniedDialog = false
+                        }
+                    ) {
+                        Text("Otwórz ustawienia")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showNotificationDeniedDialog = false
+                            pendingHabitData?.let { (name, time, frequency) ->
+                                viewModel.addHabit(name, time, frequency)
+                                Toast.makeText(
+                                    context,
+                                    "Nawyk dodany bez przypomnień",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                pendingHabitData = null
+                            }
+                        }
+                    ) {
+                        Text("Dodaj mimo to")
+                    }
+                }
+            )
+        }
+
+        if (showAlarmExplanation) {
+            AlertDialog(
+                onDismissRequest = {
+                    showAlarmExplanation = false
+                    pendingHabitData?.let { (name, time, frequency) ->
+                        viewModel.addHabit(name, time, frequency)
+                        Toast.makeText(
+                            context,
+                            "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        pendingHabitData = null
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = {
+                    Text("Dokładne przypomnienia")
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Aby przypomnienia pojawiały się dokładnie o wybranej godzinie, potrzebne jest dodatkowe uprawnienie.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "\n✓ Przypomnienia o dokładnej godzinie\n✓ Brak opóźnień w powiadomieniach\n✓ Lepsza konsekwencja w nawykach",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "\nBez tego uprawnienia przypomnienia mogą pojawić się z opóźnieniem (do kilku minut).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showAlarmExplanation = false
+                            permissionManager.requestExactAlarmPermission { granted ->
+                                if (granted) {
+                                    pendingHabitData?.let { (name, time, frequency) ->
+                                        viewModel.addHabit(name, time, frequency)
+                                        Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                                        pendingHabitData = null
+                                    }
+                                } else {
+                                    showAlarmDeniedDialog = true
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Przyznaj uprawnienie")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showAlarmExplanation = false
+                            pendingHabitData?.let { (name, time, frequency) ->
+                                viewModel.addHabit(name, time, frequency)
+                                Toast.makeText(
+                                    context,
+                                    "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                pendingHabitData = null
+                            }
+                        }
+                    ) {
+                        Text("Pomiń")
+                    }
+                }
+            )
+        }
+
+        if (showAlarmDeniedDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showAlarmDeniedDialog = false
+                    pendingHabitData?.let { (name, time, frequency) ->
+                        viewModel.addHabit(name, time, frequency)
+                        pendingHabitData = null
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = {
+                    Text("Brak uprawnień do dokładnych alarmów")
+                },
+                text = {
+                    Text(
+                        "Bez uprawnienia do dokładnych alarmów przypomnienia mogą pojawić się z opóźnieniem.\n\n" +
+                                "⚠️ Konsekwencje:\n" +
+                                "• Powiadomienia mogą być opóźnione o kilka minut\n" +
+                                "• Trudniej zachować regularność\n" +
+                                "• Aplikacja będzie działać, ale mniej precyzyjnie\n\n" +
+                                "Możesz włączyć to uprawnienie później w ustawieniach systemowych."
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            permissionManager.openAppSettings()
+                            showAlarmDeniedDialog = false
+                        }
+                    ) {
+                        Text("Otwórz ustawienia")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showAlarmDeniedDialog = false
+                            pendingHabitData?.let { (name, time, frequency) ->
+                                viewModel.addHabit(name, time, frequency)
+                                Toast.makeText(
+                                    context,
+                                    "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                pendingHabitData = null
+                            }
+                        }
+                    ) {
+                        Text("Rozumiem")
+                    }
                 }
             )
         }

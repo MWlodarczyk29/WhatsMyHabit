@@ -13,9 +13,6 @@ object WorkManagerScheduler {
 
     private const val HABIT_RESET_WORK_NAME = "habit_reset_work"
 
-    /**
-     * planuje codzienne resetowanie nawyków o północy
-     */
     fun scheduleDailyReset(context: Context) {
         val currentTime = Calendar.getInstance()
         val midnight = Calendar.getInstance().apply {
@@ -50,9 +47,6 @@ object WorkManagerScheduler {
         )
     }
 
-    /**
-     * anuluje zaplanowane resetowanie
-     */
     fun cancelDailyReset(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(HABIT_RESET_WORK_NAME)
     }

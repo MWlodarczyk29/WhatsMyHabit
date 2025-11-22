@@ -23,8 +23,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         permissionManager = PermissionManager(this)
-        permissionManager.requestNotificationPermission()
-        permissionManager.requestExactAlarmPermission()
 
         NotificationUtils.createNotificationChannel(this)
 
@@ -46,7 +44,10 @@ class MainActivity : ComponentActivity() {
             }
 
             WhatsMyHabitTheme(darkTheme = useDarkTheme) {
-                MainScreen(viewModel = viewModel)
+                MainScreen(
+                    viewModel = viewModel,
+                    permissionManager = permissionManager
+                )
             }
         }
     }
