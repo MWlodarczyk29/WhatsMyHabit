@@ -11,7 +11,6 @@ import android.widget.Toast
 
 class HabitNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        Toast.makeText(context, "Receiver uruchomiony!", Toast.LENGTH_LONG).show()
 
         val habitId = intent?.getIntExtra("habit_id", 0) ?: 0
         val habitName = intent?.getStringExtra("habit_name") ?: "Twój nawyk"
