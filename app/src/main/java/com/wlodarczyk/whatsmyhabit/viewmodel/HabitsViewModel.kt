@@ -1,15 +1,17 @@
 package com.wlodarczyk.whatsmyhabit.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
+import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HabitsViewModel(
@@ -47,6 +49,19 @@ class HabitsViewModel(
                 _habits.value = updatedList
                 HabitDataStore.saveHabits(context, updatedList)
             }
+        }
+    }
+
+    fun reloadFromDataStore() {
+        viewModelScope.launch {
+            Log.d("HabitsViewModel", "Przeładowywanie z DataStore...")
+
+            val freshData = HabitDataStore.getHabitsFlow(context).first()
+            Log.d("HabitsViewModel", "Załadowano ${freshData.size} nawyków")
+
+            _habits.value = freshData
+
+            checkAndResetHabits()
         }
     }
 

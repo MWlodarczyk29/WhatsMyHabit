@@ -1,6 +1,7 @@
 package com.wlodarczyk.whatsmyhabit.ui.theme.screens
 
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,8 @@ import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitCard
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitStatsHeader
 import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
+import kotlinx.coroutines.delay
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -50,7 +53,28 @@ fun MainScreen(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     LaunchedEffect(Unit) {
-        viewModel.checkAndResetHabits()
+        viewModel.reloadFromDataStore()
+    }
+
+    LaunchedEffect(Unit) {
+        delay(1000)
+
+        var lastCheckedDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+        var lastCheckedYear = Calendar.getInstance().get(Calendar.YEAR)
+
+        while (true) {
+            delay(60000)
+
+            val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+
+            if (currentDay != lastCheckedDay || currentYear != lastCheckedYear) {
+                Log.d("MainScreen", "Wykryto nowy dzień! Przeładowywanie danych...")
+                viewModel.reloadFromDataStore()
+                lastCheckedDay = currentDay
+                lastCheckedYear = currentYear
+            }
+        }
     }
 
     Scaffold(
