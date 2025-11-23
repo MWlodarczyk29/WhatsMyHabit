@@ -19,6 +19,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
+import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitCard
@@ -37,7 +38,12 @@ fun MainScreen(
     val context = LocalContext.current
 
     val habits by viewModel.habits.collectAsState()
+    val languagePreference by SettingsDataStore.getLanguagePreference(context).collectAsState(initial = "PL")
+    val isEnglish = languagePreference == "EN"
+
     var showDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var habitToDelete by remember { mutableStateOf<com.wlodarczyk.whatsmyhabit.model.Habit?>(null) }
 
     var showNotificationExplanation by remember { mutableStateOf(false) }
     var showAlarmExplanation by remember { mutableStateOf(false) }
@@ -58,13 +64,11 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         delay(1000)
-
         var lastCheckedDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
         var lastCheckedYear = Calendar.getInstance().get(Calendar.YEAR)
 
         while (true) {
             delay(60000)
-
             val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
@@ -83,14 +87,14 @@ fun MainScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Moje nawyki") },
+                title = { Text(if (isEnglish) "My Habits" else "Moje nawyki") },
                 actions = {
                     IconButton(onClick = {
                         context.startActivity(Intent(context, SettingsActivity::class.java))
                     }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Ustawienia"
+                            contentDescription = if (isEnglish) "Settings" else "Ustawienia"
                         )
                     }
                 },
@@ -99,7 +103,7 @@ fun MainScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj nawyk")
+                Icon(Icons.Default.Add, contentDescription = if (isEnglish) "Add habit" else "Dodaj nawyk")
             }
         }
     ) { innerPadding ->
@@ -110,12 +114,13 @@ fun MainScreen(
         ) {
             HabitStatsHeader(
                 doneCount = viewModel.getDoneCount(),
-                totalCount = viewModel.getTotalActiveTodayCount()
+                totalCount = viewModel.getTotalActiveTodayCount(),
+                isEnglish = isEnglish
             )
 
             if (activeTodayHabits.isEmpty()) {
                 Text(
-                    text = "Brak nawyków na dziś. Dodaj nowy nawyk!",
+                    text = if (isEnglish) "No habits for today. Add a new habit!" else "Brak nawyków na dziś. Dodaj nowy nawyk!",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -128,24 +133,75 @@ fun MainScreen(
                 items(activeTodayHabits, key = { it.id }) { habit ->
                     HabitCard(
                         habit = habit,
+                        isEnglish = isEnglish,
                         onCheckedChange = { checked ->
                             viewModel.toggleHabitDone(habit.id, checked)
                         },
                         onDelete = {
-                            viewModel.removeHabit(habit)
-                            Toast.makeText(
-                                context,
-                                "Usunięto nawyk",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            habitToDelete = habit
+                            showDeleteDialog = true
                         }
                     )
                 }
             }
         }
 
+        if (showDeleteDialog && habitToDelete != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteDialog = false
+                    habitToDelete = null
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                },
+                title = {
+                    Text(if (isEnglish) "Delete habit?" else "Usunąć nawyk?")
+                },
+                text = {
+                    Text(
+                        if (isEnglish)
+                            "Are you sure you want to delete \"${habitToDelete?.name}\"? This action cannot be undone."
+                        else
+                            "Czy na pewno chcesz usunąć \"${habitToDelete?.name}\"? Tej operacji nie można cofnąć."
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            habitToDelete?.let { habit ->
+                                viewModel.removeHabit(habit)
+                                Toast.makeText(
+                                    context,
+                                    if (isEnglish) "Habit deleted" else "Usunięto nawyk",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            showDeleteDialog = false
+                            habitToDelete = null
+                        }
+                    ) {
+                        Text(if (isEnglish) "Delete" else "Usuń", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showDeleteDialog = false
+                        habitToDelete = null
+                    }) {
+                        Text(if (isEnglish) "Cancel" else "Anuluj")
+                    }
+                }
+            )
+        }
+
         if (showDialog) {
             AddHabitDialog(
+                isEnglish = isEnglish,
                 onDismiss = { showDialog = false },
                 onConfirm = { name, time, frequency ->
                     showDialog = false
@@ -153,7 +209,11 @@ fun MainScreen(
 
                     val addHabit = {
                         viewModel.addHabit(name, time, frequency)
-                        Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            if (isEnglish) "Habit added" else "Dodano nawyk",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         pendingHabitData = null
                     }
 
@@ -176,7 +236,7 @@ fun MainScreen(
                         viewModel.addHabit(name, time, frequency)
                         Toast.makeText(
                             context,
-                            "Nawyk dodany bez przypomnień",
+                            if (isEnglish) "Habit added without reminders" else "Nawyk dodany bez przypomnień",
                             Toast.LENGTH_LONG
                         ).show()
                         pendingHabitData = null
@@ -190,16 +250,22 @@ fun MainScreen(
                     )
                 },
                 title = {
-                    Text("Przypomnienia o nawykach")
+                    Text(if (isEnglish) "Habit Reminders" else "Przypomnienia o nawykach")
                 },
                 text = {
                     Column {
                         Text(
-                            text = "Aby aplikacja mogła wysyłać Ci przypomnienia o nawykach o wybranej godzinie, potrzebne jest uprawnienie do powiadomień.",
+                            text = if (isEnglish)
+                                "To send you reminders about habits at the selected time, notification permission is required."
+                            else
+                                "Aby aplikacja mogła wysyłać Ci przypomnienia o nawykach o wybranej godzinie, potrzebne jest uprawnienie do powiadomień.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "\n✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego nawyku\n✓ Zwiększysz szansę na sukces",
+                            text = if (isEnglish)
+                                "\n✓ You'll receive notifications at habit time\n✓ You won't miss any habit\n✓ Increase your chances of success"
+                            else
+                                "\n✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego nawyku\n✓ Zwiększysz szansę na sukces",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -216,7 +282,11 @@ fun MainScreen(
                                     } else {
                                         pendingHabitData?.let { (name, time, frequency) ->
                                             viewModel.addHabit(name, time, frequency)
-                                            Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                if (isEnglish) "Habit added" else "Dodano nawyk",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                             pendingHabitData = null
                                         }
                                     }
@@ -226,7 +296,7 @@ fun MainScreen(
                             }
                         }
                     ) {
-                        Text("Przyznaj uprawnienie")
+                        Text(if (isEnglish) "Grant permission" else "Przyznaj uprawnienie")
                     }
                 },
                 dismissButton = {
@@ -237,14 +307,14 @@ fun MainScreen(
                                 viewModel.addHabit(name, time, frequency)
                                 Toast.makeText(
                                     context,
-                                    "Nawyk dodany bez przypomnień",
+                                    if (isEnglish) "Habit added without reminders" else "Nawyk dodany bez przypomnień",
                                     Toast.LENGTH_LONG
                                 ).show()
                                 pendingHabitData = null
                             }
                         }
                     ) {
-                        Text("Pomiń")
+                        Text(if (isEnglish) "Skip" else "Pomiń")
                     }
                 }
             )
@@ -267,16 +337,14 @@ fun MainScreen(
                     )
                 },
                 title = {
-                    Text("Brak uprawnień do powiadomień")
+                    Text(if (isEnglish) "No notification permission" else "Brak uprawnień do powiadomień")
                 },
                 text = {
                     Text(
-                        "Bez uprawnienia do powiadomień aplikacja nie będzie mogła wysyłać przypomnień o nawykach.\n\n" +
-                                "⚠️ Konsekwencje:\n" +
-                                "• Nie otrzymasz powiadomień o czasie nawyku\n" +
-                                "• Musisz sam pamiętać o swoich nawykach\n" +
-                                "• Może to obniżyć skuteczność budowania nawyków\n\n" +
-                                "Możesz włączyć powiadomienia później w ustawieniach systemowych aplikacji."
+                        if (isEnglish)
+                            "Without notification permission, the app won't be able to send habit reminders.\n\n⚠️ Consequences:\n• You won't receive notifications at habit time\n• You must remember your habits yourself\n• This may reduce habit-building effectiveness\n\nYou can enable notifications later in app system settings."
+                        else
+                            "Bez uprawnienia do powiadomień aplikacja nie będzie mogła wysyłać przypomnień o nawykach.\n\n⚠️ Konsekwencje:\n• Nie otrzymasz powiadomień o czasie nawyku\n• Musisz sam pamiętać o swoich nawykach\n• Może to obniżyć skuteczność budowania nawyków\n\nMożesz włączyć powiadomienia później w ustawieniach systemowych aplikacji."
                     )
                 },
                 confirmButton = {
@@ -286,7 +354,7 @@ fun MainScreen(
                             showNotificationDeniedDialog = false
                         }
                     ) {
-                        Text("Otwórz ustawienia")
+                        Text(if (isEnglish) "Open settings" else "Otwórz ustawienia")
                     }
                 },
                 dismissButton = {
@@ -297,14 +365,14 @@ fun MainScreen(
                                 viewModel.addHabit(name, time, frequency)
                                 Toast.makeText(
                                     context,
-                                    "Nawyk dodany bez przypomnień",
+                                    if (isEnglish) "Habit added without reminders" else "Nawyk dodany bez przypomnień",
                                     Toast.LENGTH_LONG
                                 ).show()
                                 pendingHabitData = null
                             }
                         }
                     ) {
-                        Text("Dodaj mimo to")
+                        Text(if (isEnglish) "Add anyway" else "Dodaj mimo to")
                     }
                 }
             )
@@ -318,7 +386,7 @@ fun MainScreen(
                         viewModel.addHabit(name, time, frequency)
                         Toast.makeText(
                             context,
-                            "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                            if (isEnglish) "Habit added (reminders may be delayed)" else "Nawyk dodany (przypomnienia mogą być opóźnione)",
                             Toast.LENGTH_LONG
                         ).show()
                         pendingHabitData = null
@@ -332,21 +400,30 @@ fun MainScreen(
                     )
                 },
                 title = {
-                    Text("Dokładne przypomnienia")
+                    Text(if (isEnglish) "Exact Reminders" else "Dokładne przypomnienia")
                 },
                 text = {
                     Column {
                         Text(
-                            text = "Aby przypomnienia pojawiały się dokładnie o wybranej godzinie, potrzebne jest dodatkowe uprawnienie.",
+                            text = if (isEnglish)
+                                "For reminders to appear exactly at the selected time, additional permission is required."
+                            else
+                                "Aby przypomnienia pojawiały się dokładnie o wybranej godzinie, potrzebne jest dodatkowe uprawnienie.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            text = "\n✓ Przypomnienia o dokładnej godzinie\n✓ Brak opóźnień w powiadomieniach\n✓ Lepsza konsekwencja w nawykach",
+                            text = if (isEnglish)
+                                "\n✓ Reminders at exact time\n✓ No notification delays\n✓ Better consistency in habits"
+                            else
+                                "\n✓ Przypomnienia o dokładnej godzinie\n✓ Brak opóźnień w powiadomieniach\n✓ Lepsza konsekwencja w nawykach",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "\nBez tego uprawnienia przypomnienia mogą pojawić się z opóźnieniem (do kilku minut).",
+                            text = if (isEnglish)
+                                "\nWithout this permission, reminders may appear with a delay (up to a few minutes)."
+                            else
+                                "\nBez tego uprawnienia przypomnienia mogą pojawić się z opóźnieniem (do kilku minut).",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -360,7 +437,11 @@ fun MainScreen(
                                 if (granted) {
                                     pendingHabitData?.let { (name, time, frequency) ->
                                         viewModel.addHabit(name, time, frequency)
-                                        Toast.makeText(context, "Dodano nawyk", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            if (isEnglish) "Habit added" else "Dodano nawyk",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         pendingHabitData = null
                                     }
                                 } else {
@@ -369,7 +450,7 @@ fun MainScreen(
                             }
                         }
                     ) {
-                        Text("Przyznaj uprawnienie")
+                        Text(if (isEnglish) "Grant permission" else "Przyznaj uprawnienie")
                     }
                 },
                 dismissButton = {
@@ -380,14 +461,14 @@ fun MainScreen(
                                 viewModel.addHabit(name, time, frequency)
                                 Toast.makeText(
                                     context,
-                                    "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                                    if (isEnglish) "Habit added (reminders may be delayed)" else "Nawyk dodany (przypomnienia mogą być opóźnione)",
                                     Toast.LENGTH_LONG
                                 ).show()
                                 pendingHabitData = null
                             }
                         }
                     ) {
-                        Text("Pomiń")
+                        Text(if (isEnglish) "Skip" else "Pomiń")
                     }
                 }
             )
@@ -410,16 +491,14 @@ fun MainScreen(
                     )
                 },
                 title = {
-                    Text("Brak uprawnień do dokładnych alarmów")
+                    Text(if (isEnglish) "No exact alarm permission" else "Brak uprawnień do dokładnych alarmów")
                 },
                 text = {
                     Text(
-                        "Bez uprawnienia do dokładnych alarmów przypomnienia mogą pojawić się z opóźnieniem.\n\n" +
-                                "⚠️ Konsekwencje:\n" +
-                                "• Powiadomienia mogą być opóźnione o kilka minut\n" +
-                                "• Trudniej zachować regularność\n" +
-                                "• Aplikacja będzie działać, ale mniej precyzyjnie\n\n" +
-                                "Możesz włączyć to uprawnienie później w ustawieniach systemowych."
+                        if (isEnglish)
+                            "Without exact alarm permission, reminders may appear with a delay.\n\n⚠️ Consequences:\n• Notifications may be delayed by several minutes\n• Harder to maintain regularity\n• App will work, but less precisely\n\nYou can enable this permission later in system settings."
+                        else
+                            "Bez uprawnienia do dokładnych alarmów przypomnienia mogą pojawić się z opóźnieniem.\n\n⚠️ Konsekwencje:\n• Powiadomienia mogą być opóźnione o kilka minut\n• Trudniej zachować regularność\n• Aplikacja będzie działać, ale mniej precyzyjnie\n\nMożesz włączyć to uprawnienie później w ustawieniach systemowych."
                     )
                 },
                 confirmButton = {
@@ -429,7 +508,7 @@ fun MainScreen(
                             showAlarmDeniedDialog = false
                         }
                     ) {
-                        Text("Otwórz ustawienia")
+                        Text(if (isEnglish) "Open settings" else "Otwórz ustawienia")
                     }
                 },
                 dismissButton = {
@@ -440,14 +519,14 @@ fun MainScreen(
                                 viewModel.addHabit(name, time, frequency)
                                 Toast.makeText(
                                     context,
-                                    "Nawyk dodany (przypomnienia mogą być opóźnione)",
+                                    if (isEnglish) "Habit added (reminders may be delayed)" else "Nawyk dodany (przypomnienia mogą być opóźnione)",
                                     Toast.LENGTH_LONG
                                 ).show()
                                 pendingHabitData = null
                             }
                         }
                     ) {
-                        Text("Rozumiem")
+                        Text(if (isEnglish) "I understand" else "Rozumiem")
                     }
                 }
             )

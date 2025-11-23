@@ -14,6 +14,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 object SettingsDataStore {
 
     private val THEME_KEY = stringPreferencesKey("theme_preferences")
+    private val LANGUAGE_KEY = stringPreferencesKey("language_preference")
 
     suspend fun saveThemePreference(context: Context, themeValue: String) {
         context.dataStore.edit { preferences ->
@@ -27,4 +28,15 @@ object SettingsDataStore {
         }
     }
 
+    suspend fun saveLanguagePreference(context: Context, language: String) {
+        context.dataStore.edit { preferences ->
+            preferences[LANGUAGE_KEY] = language
+        }
+    }
+
+    fun getLanguagePreference(context: Context): Flow<String> {
+        return context.dataStore.data.map { preferences ->
+            preferences[LANGUAGE_KEY] ?: "PL"
+        }
+    }
 }

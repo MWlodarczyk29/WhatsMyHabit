@@ -1,27 +1,11 @@
 package com.wlodarczyk.whatsmyhabit.ui.theme.components
 
 import android.app.TimePickerDialog
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +16,7 @@ import java.util.Calendar
 
 @Composable
 fun AddHabitDialog(
+    isEnglish: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (name: String, time: String, frequency: HabitFrequency) -> Unit
 ) {
@@ -55,16 +40,15 @@ fun AddHabitDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dodaj nowy nawyk") },
+        title = { Text(if (isEnglish) "Add new habit" else "Dodaj nowy nawyk") },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Pole nazwy
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nazwa nawyku") },
+                    label = { Text(if (isEnglish) "Habit name" else "Nazwa nawyku") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -75,9 +59,14 @@ fun AddHabitDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = if (time.isNotBlank()) "Godzina: $time" else "Wybierz godzinę")
+                    Text(
+                        text = if (time.isNotBlank())
+                            "${if (isEnglish) "Time" else "Godzina"}: $time"
+                        else
+                            if (isEnglish) "Select time" else "Wybierz godzinę"
+                    )
                     TextButton(onClick = { timePickerDialog.show() }) {
-                        Text("Zmień")
+                        Text(if (isEnglish) "Change" else "Zmień")
                     }
                 }
 
@@ -86,7 +75,7 @@ fun AddHabitDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Częstotliwość:",
+                    text = if (isEnglish) "Frequency:" else "Częstotliwość:",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -111,7 +100,7 @@ fun AddHabitDialog(
                                 onClick = null
                             )
                             Text(
-                                text = frequency.displayName,
+                                text = frequency.getDisplayName(isEnglish),
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }
@@ -127,12 +116,12 @@ fun AddHabitDialog(
                     }
                 }
             ) {
-                Text("Dodaj")
+                Text(if (isEnglish) "Add" else "Dodaj")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Anuluj")
+                Text(if (isEnglish) "Cancel" else "Anuluj")
             }
         }
     )

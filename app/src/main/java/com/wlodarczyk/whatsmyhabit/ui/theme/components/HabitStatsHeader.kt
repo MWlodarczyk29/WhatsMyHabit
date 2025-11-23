@@ -7,9 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HabitStatsHeader(doneCount: Int, totalCount: Int) {
+fun HabitStatsHeader(doneCount: Int, totalCount: Int, isEnglish: Boolean = false) {
     Text(
-        text = "Liczba ukończonych nawyków: $doneCount / $totalCount",
+        text = if (isEnglish)
+            "Completed habits: $doneCount / $totalCount"
+        else
+            "Liczba ukończonych nawyków: $doneCount / $totalCount",
         modifier = Modifier.padding(8.dp)
     )
 }

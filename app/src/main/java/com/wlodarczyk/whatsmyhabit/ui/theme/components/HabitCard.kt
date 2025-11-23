@@ -1,21 +1,9 @@
 package com.wlodarczyk.whatsmyhabit.ui.theme.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +14,7 @@ import com.wlodarczyk.whatsmyhabit.model.Habit
 @Composable
 fun HabitCard(
     habit: Habit,
+    isEnglish: Boolean = false,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -72,7 +61,7 @@ fun HabitCard(
                     )
 
                     Text(
-                        text = "🔄 ${habit.frequency.displayName}",
+                        text = "🔄 ${habit.frequency.getDisplayName(isEnglish)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -82,7 +71,7 @@ fun HabitCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Usuń nawyk",
+                    contentDescription = if (isEnglish) "Delete habit" else "Usuń nawyk",
                     tint = MaterialTheme.colorScheme.error
                 )
             }

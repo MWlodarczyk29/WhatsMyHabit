@@ -9,9 +9,6 @@ data class Habit(
     val createdDate: Long = System.currentTimeMillis(),
     var lastCompletedDate: Long? = null
 ) {
-    /**
-     * sprawdza czy nawyk powinien być aktywny dzisiaj
-     */
     fun isActiveToday(): Boolean {
         val today = getTodayStartMillis()
         val createdDay = getDayStartMillis(createdDate)
@@ -22,14 +19,9 @@ data class Habit(
             HabitFrequency.DAILY -> true
             HabitFrequency.EVERY_2_DAYS -> daysDiff % 2 == 0
             HabitFrequency.WEEKLY -> daysDiff % 7 == 0
-            HabitFrequency.MONTHLY -> daysDiff % 30 == 0
         }
     }
 
-    /**
-     * sprawdza czy nawyk powinien zostać zresetowany
-     * (czy jest nowy dzień i nawyk był już zaznaczony)
-     */
     fun shouldReset(): Boolean {
         if (!done || lastCompletedDate == null) return false
 
