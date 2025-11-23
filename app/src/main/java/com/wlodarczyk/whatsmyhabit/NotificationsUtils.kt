@@ -13,6 +13,9 @@ import android.Manifest
 import android.util.Log
 import android.app.PendingIntent
 import android.content.Intent
+import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 object NotificationUtils {
 
@@ -20,28 +23,32 @@ object NotificationUtils {
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Przypomnienia o nawykach"
-            val descriptionText = "Powiadomienia przypominające o wykonaniu nawyku"
+            val isEnglish = runBlocking {
+                SettingsDataStore.getLanguagePreference(context).first() == "EN"
+            }
 
-            // IMPORTANCE_HIGH żeby powiadomienia nie były ciche
+            val name = if (isEnglish) "Habit Reminders" else "Przypomnienia o nawykach"
+            val descriptionText = if (isEnglish)
+                "Notifications reminding you to perform habits"
+            else
+                "Powiadomienia przypominające o wykonaniu nawyku"
+
             val importance = NotificationManager.IMPORTANCE_HIGH
 
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
 
-                // włącz dźwięk
                 setSound(
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
                     null
                 )
 
-                // włącz wibracje
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 250, 250, 250)
 
-                // włącz pokazywanie na ekranie blokady
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
 
+                enableLights(true)
             }
 
             val notificationManager: NotificationManager =
@@ -53,6 +60,10 @@ object NotificationUtils {
     }
 
     fun showHabitNotification(context: Context, habitName: String, habitId: Int) {
+        val isEnglish = runBlocking {
+            SettingsDataStore.getLanguagePreference(context).first() == "EN"
+        }
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -63,36 +74,29 @@ object NotificationUtils {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // użyj domyślnego dźwięku powiadomienia
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+        val title = if (isEnglish) "Time for your habit!" else "Czas na Twój nawyk!"
+        val bigText = if (isEnglish)
+            "It's time to complete: $habitName"
+        else
+            "Nadszedł czas na wykonanie nawyku: $habitName"
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Czas na Twój nawyk!")
+            .setContentTitle(title)
             .setContentText(habitName)
-
-            //PRIORITY_HIGH dla starszych Androidów (przed API 26)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-            // kategoria jako alarm/reminder
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-
-            // Dźwięk i wibracje
             .setSound(defaultSoundUri)
             .setVibrate(longArrayOf(0, 250, 250, 250))
-
-            //wyświetlanie jako heads-up notification
             .setDefaults(NotificationCompat.DEFAULT_ALL)
-
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-
-            // styl expanded dla większego tekstu
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("Nadszedł czas na wykonanie nawyku: $habitName")
+                    .bigText(bigText)
             )
-
             .build()
 
         val notificationManager = NotificationManagerCompat.from(context)

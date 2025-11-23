@@ -1,6 +1,9 @@
 package com.wlodarczyk.whatsmyhabit
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -10,12 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,6 +79,22 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    context.startActivity(intent)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = if (isEnglish) "App info" else "Informacje o aplikacji",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -82,6 +103,7 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            // SEKCJA MOTYWU
             Text(
                 text = if (isEnglish) "App Theme" else "Motyw aplikacji",
                 style = MaterialTheme.typography.titleLarge
@@ -129,6 +151,7 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
             Divider()
             Spacer(modifier = Modifier.height(24.dp))
 
+            // SEKCJA JĘZYKA
             Text(
                 text = if (isEnglish) "Language" else "Język",
                 style = MaterialTheme.typography.titleLarge
