@@ -7,32 +7,32 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 
 class HabitNotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-
         val habitId = intent?.getIntExtra("habit_id", 0) ?: 0
         val habitName = intent?.getStringExtra("habit_name") ?: "Twój nawyk"
         val time = intent?.getStringExtra("habit_time") ?: ""
+
+        Log.d("HabitReceiver", "Otrzymano alarm dla: $habitName (ID: $habitId)")
+
         if (androidx.core.content.ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d("HabitReceiver", "Wywoływanie NotificationUtils.showHabitNotification dla: $habitName")
+            Log.d("HabitReceiver", "Pokazywanie powiadomienia dla: $habitName")
             NotificationUtils.showHabitNotification(context, habitName, habitId)
         } else {
             Log.e("HabitReceiver", "Brak uprawnień do wysłania powiadomienia!")
         }
-
         if (time.isNotEmpty()) {
             rescheduleAlarm(context, habitId, habitName, time)
         }
     }
 
     private fun rescheduleAlarm(context: Context, habitId: Int, habitName: String, time: String) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context, HabitNotificationReceiver::class.java).apply {
             putExtra("habit_id", habitId)

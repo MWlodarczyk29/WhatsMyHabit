@@ -10,16 +10,7 @@ data class Habit(
     var lastCompletedDate: Long? = null
 ) {
     fun isActiveToday(): Boolean {
-        val today = getTodayStartMillis()
-        val createdDay = getDayStartMillis(createdDate)
-
-        val daysDiff = ((today - createdDay) / (24 * 60 * 60 * 1000)).toInt()
-
-        return when (frequency) {
-            HabitFrequency.DAILY -> true
-            HabitFrequency.EVERY_2_DAYS -> daysDiff % 2 == 0
-            HabitFrequency.WEEKLY -> daysDiff % 7 == 0
-        }
+        return true
     }
 
     fun shouldReset(): Boolean {

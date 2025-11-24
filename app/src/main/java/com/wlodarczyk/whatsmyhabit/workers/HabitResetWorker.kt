@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
+import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import kotlinx.coroutines.flow.first
 
 class HabitResetWorker(
@@ -28,6 +29,19 @@ class HabitResetWorker(
             }
 
             HabitDataStore.saveHabits(applicationContext, updatedHabits)
+
+            val alarmScheduler = AlarmScheduler(applicationContext)
+
+            habits.forEach { habit ->
+                alarmScheduler.cancelAlarm(habit)
+            }
+
+            Log.d("HabitResetWorker", "Planowanie alarmów dla ${updatedHabits.size} nawyków na nowy dzień")
+
+            updatedHabits.forEach { habit ->
+                Log.d("HabitResetWorker", "Planowanie alarmu dla: ${habit.name}")
+                alarmScheduler.scheduleAlarm(habit)
+            }
 
             Log.d("HabitResetWorker", "Zakończono resetowanie nawyków")
             Result.success()

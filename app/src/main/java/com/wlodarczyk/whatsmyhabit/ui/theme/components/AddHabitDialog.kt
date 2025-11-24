@@ -69,43 +69,6 @@ fun AddHabitDialog(
                         Text(if (isEnglish) "Change" else "Zmień")
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = if (isEnglish) "Frequency:" else "Częstotliwość:",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Column(modifier = Modifier.selectableGroup()) {
-                    HabitFrequency.values().forEach { frequency ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .selectable(
-                                    selected = (selectedFrequency == frequency),
-                                    onClick = { selectedFrequency = frequency },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (selectedFrequency == frequency),
-                                onClick = null
-                            )
-                            Text(
-                                text = frequency.getDisplayName(isEnglish),
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                    }
-                }
             }
         },
         confirmButton = {

@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import com.wlodarczyk.whatsmyhabit.HabitNotificationReceiver
 import com.wlodarczyk.whatsmyhabit.model.Habit
@@ -17,6 +18,8 @@ class AlarmScheduler(private val context: Context) {
     fun scheduleAlarm(habit: Habit) {
         val pendingIntent = createPendingIntent(habit)
         val calendar = calculateAlarmTime(habit.time)
+
+        Log.d("AlarmScheduler", "Planowanie alarmu dla: ${habit.name} na ${calendar.time}")
 
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -38,17 +41,12 @@ class AlarmScheduler(private val context: Context) {
                 )
             }
         }
-
-        Toast.makeText(
-            context,
-            "Alarm zaplanowany na ${calendar.time}",
-            Toast.LENGTH_LONG
-        ).show()
     }
 
     fun cancelAlarm(habit: Habit) {
         val pendingIntent = createPendingIntent(habit)
         alarmManager.cancel(pendingIntent)
+        Log.d("AlarmScheduler", "Anulowano alarm dla: ${habit.name}")
     }
 
     private fun createPendingIntent(habit: Habit): PendingIntent {
@@ -56,6 +54,7 @@ class AlarmScheduler(private val context: Context) {
             putExtra("habit_id", habit.id)
             putExtra("habit_name", habit.name)
             putExtra("habit_time", habit.time)
+            putExtra("habit_frequency", habit.frequency.name) // DODANO
         }
 
         return PendingIntent.getBroadcast(
@@ -89,17 +88,14 @@ class AlarmScheduler(private val context: Context) {
                 timeInMillis,
                 pendingIntent
             )
+            Log.d("AlarmScheduler", "Zaplanowano dokładny alarm")
         } else {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 timeInMillis,
                 pendingIntent
             )
-            Toast.makeText(
-                context,
-                "Powiadomienia mogą być opóźnione. Nadaj uprawnienia do alarmów w ustawieniach.",
-                Toast.LENGTH_LONG
-            ).show()
+            Log.w("AlarmScheduler", "Brak uprawnień do dokładnych alarmów")
         }
     }
 }

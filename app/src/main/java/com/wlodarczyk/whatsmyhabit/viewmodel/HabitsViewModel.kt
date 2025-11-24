@@ -49,6 +49,7 @@ class HabitsViewModel(
                 _habits.value = updatedList
                 HabitDataStore.saveHabits(context, updatedList)
             }
+            rescheduleAllAlarms()
         }
     }
 
@@ -65,8 +66,23 @@ class HabitsViewModel(
         }
     }
 
+    private fun rescheduleAllAlarms() {
+        viewModelScope.launch {
+            _habits.value.forEach { habit ->
+                alarmScheduler.cancelAlarm(habit)
+            }
+
+            Log.d("HabitsViewModel", "Planowanie alarmów dla ${_habits.value.size} nawyków")
+
+            _habits.value.forEach { habit ->
+                Log.d("HabitsViewModel", "Planowanie alarmu dla: ${habit.name}")
+                alarmScheduler.scheduleAlarm(habit)
+            }
+        }
+    }
+
     fun getActiveTodayHabits(): List<Habit> {
-        return _habits.value.filter { it.isActiveToday() }
+        return _habits.value // Wszystkie (DAILY)
     }
 
     fun addHabit(name: String, time: String, frequency: HabitFrequency = HabitFrequency.DAILY) {
@@ -83,6 +99,7 @@ class HabitsViewModel(
         val updatedList = _habits.value + newHabit
         _habits.value = updatedList
 
+        Log.d("HabitsViewModel", "Planowanie alarmu dla nowego nawyku")
         alarmScheduler.scheduleAlarm(newHabit)
 
         viewModelScope.launch {
@@ -120,7 +137,7 @@ class HabitsViewModel(
         }
     }
 
-    fun getDoneCount(): Int = getActiveTodayHabits().count { it.done }
+    fun getDoneCount(): Int = _habits.value.count { it.done }
 
-    fun getTotalActiveTodayCount(): Int = getActiveTodayHabits().size
+    fun getTotalActiveTodayCount(): Int = _habits.value.size
 }

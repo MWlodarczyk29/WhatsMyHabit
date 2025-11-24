@@ -41,6 +41,8 @@ fun MainScreen(
     val languagePreference by SettingsDataStore.getLanguagePreference(context).collectAsState(initial = "PL")
     val isEnglish = languagePreference == "EN"
 
+    var recomposeKey by remember { mutableStateOf(0) }
+
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<com.wlodarczyk.whatsmyhabit.model.Habit?>(null) }
@@ -52,8 +54,8 @@ fun MainScreen(
 
     var pendingHabitData by remember { mutableStateOf<Triple<String, String, HabitFrequency>?>(null) }
 
-    val activeTodayHabits = remember(habits) {
-        habits.filter { it.isActiveToday() }
+    val allHabits = remember(habits, recomposeKey) {
+        habits
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -73,7 +75,7 @@ fun MainScreen(
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
             if (currentDay != lastCheckedDay || currentYear != lastCheckedYear) {
-                Log.d("MainScreen", "Wykryto nowy dzień! Przeładowywanie danych...")
+                Log.d("MainScreen", "Wykryto nowy dzień. Przeładowywanie danych...")
                 viewModel.reloadFromDataStore()
                 lastCheckedDay = currentDay
                 lastCheckedYear = currentYear
@@ -118,7 +120,7 @@ fun MainScreen(
                 isEnglish = isEnglish
             )
 
-            if (activeTodayHabits.isEmpty()) {
+            if (allHabits.isEmpty()) {
                 Text(
                     text = if (isEnglish) "No habits for today. Add a new habit!" else "Brak nawyków na dziś. Dodaj nowy nawyk!",
                     style = MaterialTheme.typography.bodyMedium,
@@ -128,9 +130,9 @@ fun MainScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
-                items(activeTodayHabits, key = { it.id }) { habit ->
+                items(allHabits, key = { habit -> "${habit.id}-$recomposeKey" }) { habit -> // ⬅️ Unikalny key!
                     HabitCard(
                         habit = habit,
                         isEnglish = isEnglish,
@@ -146,6 +148,7 @@ fun MainScreen(
             }
         }
 
+        // DIALOG POTWIERDZENIA USUNIĘCIA
         if (showDeleteDialog && habitToDelete != null) {
             AlertDialog(
                 onDismissRequest = {
@@ -263,9 +266,9 @@ fun MainScreen(
                         )
                         Text(
                             text = if (isEnglish)
-                                "\n✓ You'll receive notifications at habit time\n✓ You won't miss any habit\n✓ Increase your chances of success"
+                                "\n✓ You'll receive exact notifications at habit time\n✓ You won't miss any habit\n✓ Increase your chances of success"
                             else
-                                "\n✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego nawyku\n✓ Zwiększysz szansę na sukces",
+                                "\n✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego z nawyków\n✓ Zwiększysz szansę na swój sukces",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -342,7 +345,7 @@ fun MainScreen(
                 text = {
                     Text(
                         if (isEnglish)
-                            "Without notification permission, the app won't be able to send habit reminders.\n\n⚠️ Consequences:\n• You won't receive notifications at habit time\n• You must remember your habits yourself\n• This may reduce habit-building effectiveness\n\nYou can enable notifications later in app system settings."
+                            "Without notification permission, the app won't be able to send habit reminders.\n\n⚠️ This action results:\n• You won't receive notifications at habit time\n• You must remember your habits yourself\n• This may reduce habit-building effectiveness\n\nYou can enable notifications later in app system settings."
                         else
                             "Bez uprawnienia do powiadomień aplikacja nie będzie mogła wysyłać przypomnień o nawykach.\n\n⚠️ Konsekwencje:\n• Nie otrzymasz powiadomień o czasie nawyku\n• Musisz sam pamiętać o swoich nawykach\n• Może to obniżyć skuteczność budowania nawyków\n\nMożesz włączyć powiadomienia później w ustawieniach systemowych aplikacji."
                     )
