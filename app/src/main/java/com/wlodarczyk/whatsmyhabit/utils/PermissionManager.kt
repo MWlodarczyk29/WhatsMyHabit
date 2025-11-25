@@ -9,10 +9,6 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.core.content.ContextCompat
 
 class PermissionManager(private val activity: ComponentActivity) {
@@ -46,7 +42,7 @@ class PermissionManager(private val activity: ComponentActivity) {
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
-            true // przed API 33 nie trzeba uprawnienia!
+            true
         }
     }
 
@@ -54,7 +50,7 @@ class PermissionManager(private val activity: ComponentActivity) {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             alarmManager.canScheduleExactAlarms()
         } else {
-            true // przed API 31 nie trzeba uprawnienia!
+            true
         }
     }
 
@@ -64,11 +60,10 @@ class PermissionManager(private val activity: ComponentActivity) {
                 onResult(true)
                 return
             }
-
             onNotificationPermissionResult = onResult
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            onResult(true) // przed API 33 zawsze true
+            onResult(true)
         }
     }
 
@@ -78,22 +73,13 @@ class PermissionManager(private val activity: ComponentActivity) {
                 onResult(true)
                 return
             }
-
             onExactAlarmPermissionResult = onResult
             val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                 data = Uri.parse("package:${activity.packageName}")
             }
             exactAlarmPermissionLauncher.launch(intent)
         } else {
-            onResult(true) // przed API 31 zawsze true
-        }
-    }
-
-    fun shouldShowNotificationRationale(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            activity.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            false
+            onResult(true)
         }
     }
 
@@ -103,28 +89,4 @@ class PermissionManager(private val activity: ComponentActivity) {
         }
         activity.startActivity(intent)
     }
-}
-
-@Composable
-fun PermissionRationaleDialog(
-    title: String,
-    message: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Przejdź do ustawień")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Anuluj")
-            }
-        }
-    )
 }

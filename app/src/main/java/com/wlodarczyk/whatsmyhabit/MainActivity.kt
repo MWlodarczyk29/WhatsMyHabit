@@ -23,9 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         permissionManager = PermissionManager(this)
-
         NotificationUtils.createNotificationChannel(this)
-
         WorkManagerScheduler.scheduleDailyReset(this)
 
         setContent {

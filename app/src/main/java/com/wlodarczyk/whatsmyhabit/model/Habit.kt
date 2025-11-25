@@ -9,10 +9,6 @@ data class Habit(
     val createdDate: Long = System.currentTimeMillis(),
     var lastCompletedDate: Long? = null
 ) {
-    fun isActiveToday(): Boolean {
-        return true
-    }
-
     fun shouldReset(): Boolean {
         if (!done || lastCompletedDate == null) return false
 
