@@ -4,19 +4,24 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
 import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
@@ -60,6 +65,12 @@ fun MainScreen(
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
+    val gradientColors = listOf(
+        MaterialTheme.colorScheme.surface,
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        MaterialTheme.colorScheme.surface
+    )
+
     LaunchedEffect(Unit) {
         viewModel.reloadFromDataStore()
     }
@@ -89,7 +100,22 @@ fun MainScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(if (isEnglish) "My Habits" else "Moje nawyki") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.EmojiEvents,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(end = 8.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(if (isEnglish) "My Habits" else "Moje nawyki")
+                    }
+                },
                 actions = {
                     IconButton(onClick = {
                         context.startActivity(Intent(context, SettingsActivity::class.java))
@@ -100,55 +126,105 @@ fun MainScreen(
                         )
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = if (isEnglish) "Add habit" else "Dodaj nawyk")
+            FloatingActionButton(
+                onClick = { showDialog = true },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = if (isEnglish) "Add habit" else "Dodaj nawyk",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            HabitStatsHeader(
-                doneCount = viewModel.getDoneCount(),
-                totalCount = viewModel.getTotalActiveTodayCount(),
-                isEnglish = isEnglish
-            )
-
-            if (allHabits.isEmpty()) {
-                Text(
-                    text = if (isEnglish) "No habits for today. Add a new habit!" else "Brak nawyków na dziś. Dodaj nowy nawyk!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-            ) {
-                items(allHabits, key = { habit -> "${habit.id}-$recomposeKey" }) { habit -> // ⬅️ Unikalny key!
-                    HabitCard(
-                        habit = habit,
-                        isEnglish = isEnglish,
-                        onCheckedChange = { checked ->
-                            viewModel.toggleHabitDone(habit.id, checked)
-                        },
-                        onDelete = {
-                            habitToDelete = habit
-                            showDeleteDialog = true
-                        }
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = gradientColors
                     )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                HabitStatsHeader(
+                    doneCount = viewModel.getDoneCount(),
+                    totalCount = viewModel.getTotalActiveTodayCount(),
+                    isEnglish = isEnglish
+                )
+
+                if (allHabits.isEmpty()) {
+                    // Ulepszony pusty stan
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.EmojiEvents,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = if (isEnglish) "No habits yet" else "Brak nawyków",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isEnglish)
+                                "Start building better habits today!\nTap the + button to add your first habit."
+                            else
+                                "Zacznij budować lepsze nawyki!\nDotknij + aby dodać swój pierwszy nawyk.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(bottom = 80.dp)
+                    ) {
+                        items(allHabits, key = { habit -> "${habit.id}-$recomposeKey" }) { habit ->
+                            HabitCard(
+                                habit = habit,
+                                isEnglish = isEnglish,
+                                onCheckedChange = { checked ->
+                                    viewModel.toggleHabitDone(habit.id, checked)
+                                },
+                                onDelete = {
+                                    habitToDelete = habit
+                                    showDeleteDialog = true
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // DIALOG POTWIERDZENIA USUNIĘCIA
         if (showDeleteDialog && habitToDelete != null) {
             AlertDialog(
                 onDismissRequest = {
