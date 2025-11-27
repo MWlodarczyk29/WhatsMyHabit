@@ -30,7 +30,10 @@ class HabitsViewModel(
     private fun loadHabits() {
         viewModelScope.launch {
             HabitDataStore.getHabitsFlow(context).collect { habitsList ->
-                _habits.value = habitsList
+                val habitsWithUpdatedStreak = habitsList.map { habit ->
+                    habit.copy(streak = habit.calculateStreak())
+                }
+                _habits.value = habitsWithUpdatedStreak
             }
         }
     }
@@ -38,10 +41,19 @@ class HabitsViewModel(
     fun checkAndResetHabits() {
         viewModelScope.launch {
             val updatedList = _habits.value.map { habit ->
+                val calculatedStreak = habit.calculateStreak()
+
                 if (habit.shouldReset()) {
-                    habit.copy(done = false)
+                    Log.d("HabitsViewModel", "Reset '${habit.name}' - streak: $calculatedStreak")
+                    habit.copy(
+                        done = false,
+                        streak = calculatedStreak
+                    )
                 } else {
-                    habit
+                    if (calculatedStreak != habit.streak) {
+                        Log.d("HabitsViewModel", "Aktualizacja streak '${habit.name}': ${habit.streak} -> $calculatedStreak")
+                    }
+                    habit.copy(streak = calculatedStreak)
                 }
             }
 
@@ -60,7 +72,10 @@ class HabitsViewModel(
             val freshData = HabitDataStore.getHabitsFlow(context).first()
             Log.d("HabitsViewModel", "Załadowano ${freshData.size} nawyków")
 
-            _habits.value = freshData
+            val habitsWithUpdatedStreak = freshData.map { habit ->
+                habit.copy(streak = habit.calculateStreak())
+            }
+            _habits.value = habitsWithUpdatedStreak
 
             checkAndResetHabits()
         }
@@ -82,7 +97,7 @@ class HabitsViewModel(
     }
 
     fun getActiveTodayHabits(): List<Habit> {
-        return _habits.value // Wszystkie (DAILY)
+        return _habits.value
     }
 
     fun addHabit(name: String, time: String, frequency: HabitFrequency = HabitFrequency.DAILY) {
@@ -93,7 +108,8 @@ class HabitsViewModel(
             done = false,
             frequency = frequency,
             createdDate = System.currentTimeMillis(),
-            lastCompletedDate = null
+            lastCompletedDate = null,
+            streak = 0
         )
 
         val updatedList = _habits.value + newHabit
@@ -121,10 +137,20 @@ class HabitsViewModel(
     fun toggleHabitDone(habitId: Int, isDone: Boolean) {
         val updatedList = _habits.value.map { habit ->
             if (habit.id == habitId) {
-                habit.copy(
-                    done = isDone,
-                    lastCompletedDate = if (isDone) System.currentTimeMillis() else habit.lastCompletedDate
-                )
+                if (isDone) {
+                    val newStreak = habit.updateStreakOnCompletion()
+                    Log.d("HabitsViewModel", "Habit '${habit.name}' - nowy streak: $newStreak")
+
+                    habit.copy(
+                        done = true,
+                        lastCompletedDate = System.currentTimeMillis(),
+                        streak = newStreak
+                    )
+                } else {
+                    habit.copy(
+                        done = false
+                    )
+                }
             } else {
                 habit
             }

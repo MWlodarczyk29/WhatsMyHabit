@@ -170,7 +170,6 @@ fun MainScreen(
                 )
 
                 if (allHabits.isEmpty()) {
-                    // Ulepszony pusty stan
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
