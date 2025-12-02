@@ -16,3 +16,5 @@ fun HabitStatsHeader(doneCount: Int, totalCount: Int, isEnglish: Boolean = false
         modifier = Modifier.padding(8.dp)
     )
 }
+
+//bez zmian
