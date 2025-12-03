@@ -17,4 +17,3 @@ fun HabitStatsHeader(doneCount: Int, totalCount: Int, isEnglish: Boolean = false
     )
 }
 
-//bez zmian
