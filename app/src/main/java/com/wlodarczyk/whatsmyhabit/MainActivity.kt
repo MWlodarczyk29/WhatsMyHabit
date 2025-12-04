@@ -1,5 +1,7 @@
 package com.wlodarczyk.whatsmyhabit
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +16,9 @@ import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.utils.WorkManagerScheduler
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -47,6 +52,33 @@ class MainActivity : ComponentActivity() {
                     permissionManager = permissionManager
                 )
             }
+        }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(updateLocale(newBase))
+    }
+
+    private fun updateLocale(context: Context): Context {
+        val languagePreference = runBlocking {
+            SettingsDataStore.getLanguagePreference(context).first()
+        }
+
+        val locale = when (languagePreference) {
+            "EN" -> Locale.ENGLISH
+            else -> Locale("pl", "PL")
+        }
+
+        Locale.setDefault(locale)
+        val config = context.resources.configuration
+        config.setLocale(locale)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            context.createConfigurationContext(config)
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.updateConfiguration(config, context.resources.displayMetrics)
+            context
         }
     }
 }

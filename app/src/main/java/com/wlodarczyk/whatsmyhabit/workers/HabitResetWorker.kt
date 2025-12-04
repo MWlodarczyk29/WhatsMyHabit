@@ -13,40 +13,51 @@ class HabitResetWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
+    companion object {
+        private const val TAG = "HabitResetWorker"
+    }
+
     override suspend fun doWork(): Result {
         return try {
-            Log.d("HabitResetWorker", "Rozpoczęto resetowanie nawyków o północy")
+            Log.d(TAG, "Rozpoczęto resetowanie nawyków o północy")
 
+            // pobranie wszystkich nawyków
             val habits = HabitDataStore.getHabitsFlow(applicationContext).first()
+            Log.d(TAG, "Pobrano ${habits.size} nawyków do przetworzenia")
 
+            // resetowanie nawyków, które wymagają resetu
             val updatedHabits = habits.map { habit ->
                 if (habit.shouldReset()) {
-                    Log.d("HabitResetWorker", "Resetowanie nawyku: ${habit.name}")
+                    Log.d(TAG, "Resetowanie nawyku: ${habit.name}")
                     habit.copy(done = false)
                 } else {
                     habit
                 }
             }
 
+            // zapisanie zaktualizowanych nawyków
             HabitDataStore.saveHabits(applicationContext, updatedHabits)
 
+            // inicjalizacja schedulera alarmów
             val alarmScheduler = AlarmScheduler(applicationContext)
 
+            // anulowanie wszystkich starych alarmów
             habits.forEach { habit ->
                 alarmScheduler.cancelAlarm(habit)
             }
 
-            Log.d("HabitResetWorker", "Planowanie alarmów dla ${updatedHabits.size} nawyków na nowy dzień")
+            Log.d(TAG, "Planowanie alarmów dla ${updatedHabits.size} nawyków na nowy dzień")
 
+            // zaplanowanie nowych alarmów
             updatedHabits.forEach { habit ->
-                Log.d("HabitResetWorker", "Planowanie alarmu dla: ${habit.name}")
+                Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)
             }
 
-            Log.d("HabitResetWorker", "Zakończono resetowanie nawyków")
+            Log.d(TAG, "Zakończono resetowanie nawyków pomyślnie")
             Result.success()
         } catch (e: Exception) {
-            Log.e("HabitResetWorker", "Błąd podczas resetowania nawyków", e)
+            Log.e(TAG, "Błąd podczas resetowania nawyków", e)
             Result.failure()
         }
     }

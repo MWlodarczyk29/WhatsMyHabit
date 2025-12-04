@@ -1,19 +1,15 @@
 package com.wlodarczyk.whatsmyhabit
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -22,18 +18,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.wlodarczyk.whatsmyhabit.db.SettingsDataStore
 import com.wlodarczyk.whatsmyhabit.ui.theme.WhatsMyHabitTheme
 import kotlinx.coroutines.launch
+import java.util.Locale
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 
 class SettingsActivity : ComponentActivity() {
 
@@ -42,8 +39,8 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val themePreference by SettingsDataStore.getThemePreference(context).collectAsState(initial = "SYSTEM")
-            val languagePreference by SettingsDataStore.getLanguagePreference(context).collectAsState(initial = "PL")
+            val themePreference by SettingsDataStore.getThemePreference(context)
+                .collectAsState(initial = "SYSTEM")
 
             val useDarkTheme = when (themePreference) {
                 "LIGHT" -> false
@@ -54,28 +51,63 @@ class SettingsActivity : ComponentActivity() {
             WhatsMyHabitTheme(darkTheme = useDarkTheme) {
                 SettingsScreen(
                     onBackClicked = { finish() },
-                    isEnglish = languagePreference == "EN"
+                    onLanguageChanged = { recreate() }
                 )
             }
         }
     }
-}
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(updateLocale(newBase))
+    }
+
+    private fun updateLocale(context: Context): Context {
+        val languagePreference = runBlocking {
+            SettingsDataStore.getLanguagePreference(context).first()
+        }
+
+        val locale = when (languagePreference) {
+            "EN" -> Locale.ENGLISH
+            else -> Locale("pl", "PL")
+        }
+
+        Locale.setDefault(locale)
+        val config = context.resources.configuration
+        config.setLocale(locale)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            context.createConfigurationContext(config)
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.updateConfiguration(config, context.resources.displayMetrics)
+            context
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
+fun SettingsScreen(
+    onBackClicked: () -> Unit,
+    onLanguageChanged: () -> Unit = {}
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val themePreference by SettingsDataStore.getThemePreference(context).collectAsState(initial = "SYSTEM")
-    val languagePreference by SettingsDataStore.getLanguagePreference(context).collectAsState(initial = "PL")
+
+    val themePreference by SettingsDataStore.getThemePreference(context)
+        .collectAsState(initial = "SYSTEM")
+    val languagePreference by SettingsDataStore.getLanguagePreference(context)
+        .collectAsState(initial = "PL")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isEnglish) "Settings" else "Ustawienia") },
+                title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (isEnglish) "Back" else "Wróć")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
                 }
             )
@@ -91,7 +123,7 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = if (isEnglish) "App info" else "Informacje o aplikacji",
+                    contentDescription = stringResource(R.string.cd_app_info),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -105,17 +137,17 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
         ) {
             // SEKCJA MOTYWU
             Text(
-                text = if (isEnglish) "App Theme" else "Motyw aplikacji",
+                text = stringResource(R.string.app_theme),
                 style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val themes = if (isEnglish) {
-                mapOf("LIGHT" to "Light", "DARK" to "Dark", "SYSTEM" to "System")
-            } else {
-                mapOf("LIGHT" to "Jasny", "DARK" to "Ciemny", "SYSTEM" to "Systemowy")
-            }
+            val themes = mapOf(
+                "LIGHT" to stringResource(R.string.theme_light),
+                "DARK" to stringResource(R.string.theme_dark),
+                "SYSTEM" to stringResource(R.string.theme_system)
+            )
 
             Column(modifier = Modifier.selectableGroup()) {
                 themes.forEach { (key, value) ->
@@ -148,20 +180,20 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Divider()
+            HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
             // SEKCJA JĘZYKA
             Text(
-                text = if (isEnglish) "Language" else "Język",
+                text = stringResource(R.string.language),
                 style = MaterialTheme.typography.titleLarge
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             val languages = mapOf(
-                "PL" to "Polski",
-                "EN" to "English"
+                "PL" to stringResource(R.string.language_polish),
+                "EN" to stringResource(R.string.language_english)
             )
 
             Column(modifier = Modifier.selectableGroup()) {
@@ -175,6 +207,8 @@ fun SettingsScreen(onBackClicked: () -> Unit, isEnglish: Boolean) {
                                 onClick = {
                                     scope.launch {
                                         SettingsDataStore.saveLanguagePreference(context, key)
+                                        // ważne: przeładuj aktywność żeby zastosować nowy język
+                                        onLanguageChanged()
                                     }
                                 },
                                 role = Role.RadioButton

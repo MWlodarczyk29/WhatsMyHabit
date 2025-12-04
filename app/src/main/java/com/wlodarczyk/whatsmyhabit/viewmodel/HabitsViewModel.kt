@@ -19,6 +19,10 @@ class HabitsViewModel(
     private val alarmScheduler: AlarmScheduler
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "HabitsViewModel"
+    }
+
     private val _habits = MutableStateFlow<List<Habit>>(emptyList())
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
 
@@ -44,14 +48,14 @@ class HabitsViewModel(
                 val calculatedStreak = habit.calculateStreak()
 
                 if (habit.shouldReset()) {
-                    Log.d("HabitsViewModel", "Reset '${habit.name}' - streak: $calculatedStreak")
+                    Log.d(TAG, "Reset '${habit.name}' - streak: $calculatedStreak")
                     habit.copy(
                         done = false,
                         streak = calculatedStreak
                     )
                 } else {
                     if (calculatedStreak != habit.streak) {
-                        Log.d("HabitsViewModel", "Aktualizacja streak '${habit.name}': ${habit.streak} -> $calculatedStreak")
+                        Log.d(TAG, "Aktualizacja streak '${habit.name}': ${habit.streak} -> $calculatedStreak")
                     }
                     habit.copy(streak = calculatedStreak)
                 }
@@ -67,10 +71,10 @@ class HabitsViewModel(
 
     fun reloadFromDataStore() {
         viewModelScope.launch {
-            Log.d("HabitsViewModel", "Przeładowywanie z DataStore...")
+            Log.d(TAG, "Przeładowywanie z DataStore...")
 
             val freshData = HabitDataStore.getHabitsFlow(context).first()
-            Log.d("HabitsViewModel", "Załadowano ${freshData.size} nawyków")
+            Log.d(TAG, "Załadowano ${freshData.size} nawyków")
 
             val habitsWithUpdatedStreak = freshData.map { habit ->
                 habit.copy(streak = habit.calculateStreak())
@@ -83,21 +87,19 @@ class HabitsViewModel(
 
     private fun rescheduleAllAlarms() {
         viewModelScope.launch {
+            // anuluj wszystkie istniejące alarmy
             _habits.value.forEach { habit ->
                 alarmScheduler.cancelAlarm(habit)
             }
 
-            Log.d("HabitsViewModel", "Planowanie alarmów dla ${_habits.value.size} nawyków")
+            Log.d(TAG, "Planowanie alarmów dla ${_habits.value.size} nawyków")
 
+            // zaplanuj nowe alarmy
             _habits.value.forEach { habit ->
-                Log.d("HabitsViewModel", "Planowanie alarmu dla: ${habit.name}")
+                Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)
             }
         }
-    }
-
-    fun getActiveTodayHabits(): List<Habit> {
-        return _habits.value
     }
 
     fun addHabit(name: String, time: String, frequency: HabitFrequency = HabitFrequency.DAILY) {
@@ -115,7 +117,7 @@ class HabitsViewModel(
         val updatedList = _habits.value + newHabit
         _habits.value = updatedList
 
-        Log.d("HabitsViewModel", "Planowanie alarmu dla nowego nawyku")
+        Log.d(TAG, "Dodano nowy nawyk: ${newHabit.name}, planowanie alarmu")
         alarmScheduler.scheduleAlarm(newHabit)
 
         viewModelScope.launch {
@@ -124,6 +126,7 @@ class HabitsViewModel(
     }
 
     fun removeHabit(habit: Habit) {
+        Log.d(TAG, "Usuwanie nawyku: ${habit.name}")
         alarmScheduler.cancelAlarm(habit)
 
         val updatedList = _habits.value.filter { it.id != habit.id }
@@ -133,13 +136,12 @@ class HabitsViewModel(
             HabitDataStore.saveHabits(context, updatedList)
         }
     }
-
     fun toggleHabitDone(habitId: Int, isDone: Boolean) {
         val updatedList = _habits.value.map { habit ->
             if (habit.id == habitId) {
                 if (isDone) {
                     val newStreak = habit.updateStreakOnCompletion()
-                    Log.d("HabitsViewModel", "Habit '${habit.name}' - nowy streak: $newStreak")
+                    Log.d(TAG, "Habit '${habit.name}' - nowy streak: $newStreak")
 
                     habit.copy(
                         done = true,
@@ -147,9 +149,7 @@ class HabitsViewModel(
                         streak = newStreak
                     )
                 } else {
-                    habit.copy(
-                        done = false
-                    )
+                    habit.copy(done = false)
                 }
             } else {
                 habit
@@ -164,6 +164,7 @@ class HabitsViewModel(
     }
 
     fun getDoneCount(): Int = _habits.value.count { it.done }
-
     fun getTotalActiveTodayCount(): Int = _habits.value.size
+
+    fun getActiveTodayHabits(): List<Habit> = _habits.value
 }

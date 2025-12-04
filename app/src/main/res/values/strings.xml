@@ -1,3 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WhatsMyHabit</string>
+<!-- App Name -->
+<string name="app_name">Moje Nawyki</string>
+
+<!-- Main Screen -->
+<string name="my_habits">Moje nawyki</string>
+<string name="settings">Ustawienia</string>
+<string name="add_habit">Dodaj nawyk</string>
+<string name="completed_habits">Liczba ukończonych nawyków: %1$d / %2$d</string>
+<string name="no_habits_yet">Brak nawyków</string>
+<string name="no_habits_description">Zacznij budować lepsze nawyki!\nDotknij + aby dodać swój pierwszy nawyk.</string>
+
+<!-- Add Habit Dialog -->
+<string name="add_new_habit">Dodaj nowy nawyk</string>
+<string name="habit_name">Nazwa nawyku</string>
+<string name="time">Godzina</string>
+<string name="select_time">Wybierz godzinę</string>
+<string name="change">Zmień</string>
+<string name="add">Dodaj</string>
+<string name="cancel">Anuluj</string>
+<string name="time_format">Godzina: %1$s</string>
+
+<!-- Habit Card -->
+<string name="delete_habit">Usuń nawyk</string>
+<string name="streak_days_one">dzień</string>
+<string name="streak_days_few">dni</string>
+<string name="streak_days_many">dni</string>
+
+<!-- Delete Dialog -->
+<string name="delete_habit_title">Usunąć nawyk?</string>
+<string name="delete_habit_message">Czy na pewno chcesz usunąć \"%1$s\"? Tej operacji nie można cofnąć.</string>
+<string name="delete">Usuń</string>
+<string name="habit_deleted">Usunięto nawyk</string>
+
+<!-- Add Habit Success -->
+<string name="habit_added">Dodano nawyk</string>
+<string name="habit_added_no_reminders">Nawyk dodany bez przypomnień</string>
+<string name="habit_added_reminders_delayed">Nawyk dodany (przypomnienia mogą być opóźnione)</string>
+
+<!-- Permission Dialogs -->
+<string name="habit_reminders">Przypomnienia o nawykach</string>
+<string name="notification_permission_explanation">Aby aplikacja mogła wysyłać Ci przypomnienia o nawykach o wybranej godzinie, potrzebne jest uprawnienie do powiadomień.</string>
+<string name="notification_permission_benefits">✓ Otrzymasz powiadomienie o czasie nawyku\n✓ Nie przegapisz żadnego z nawyków\n✓ Zwiększysz szansę na swój sukces</string>
+<string name="grant_permission">Przyznaj uprawnienie</string>
+<string name="skip">Pomiń</string>
+
+<string name="no_notification_permission">Brak uprawnień do powiadomień</string>
+<string name="notification_denied_explanation">Bez uprawnienia do powiadomień aplikacja nie będzie mogła wysyłać przypomnień o nawykach.\n\n⚠️ Konsekwencje:\n• Nie otrzymasz powiadomień o czasie nawyku\n• Musisz sam pamiętać o swoich nawykach\n• Może to obniżyć skuteczność budowania nawyków\n\nMożesz włączyć powiadomienia później w ustawieniach systemowych aplikacji.</string>
+<string name="open_settings">Otwórz ustawienia</string>
+<string name="add_anyway">Dodaj mimo to</string>
+
+<string name="exact_reminders">Dokładne przypomnienia</string>
+<string name="exact_alarm_permission_explanation">Aby przypomnienia pojawiały się dokładnie o wybranej godzinie, potrzebne jest dodatkowe uprawnienie.</string>
+<string name="exact_alarm_permission_benefits">✓ Przypomnienia o dokładnej godzinie\n✓ Brak opóźnień w powiadomieniach\n✓ Lepsza konsekwencja w nawykach</string>
+<string name="exact_alarm_permission_warning">Bez tego uprawnienia przypomnienia mogą pojawić się z opóźnieniem (do kilku minut).</string>
+
+<string name="no_exact_alarm_permission">Brak uprawnień do dokładnych alarmów</string>
+<string name="exact_alarm_denied_explanation">Bez uprawnienia do dokładnych alarmów przypomnienia mogą pojawić się z opóźnieniem.\n\n⚠️ Konsekwencje:\n• Powiadomienia mogą być opóźnione o kilka minut\n• Trudniej zachować regularność\n• Aplikacja będzie działać, ale mniej precyzyjnie\n\nMożesz włączyć to uprawnienie później w ustawieniach systemowych.</string>
+<string name="i_understand">Rozumiem</string>
+
+<!-- Settings Screen -->
+<string name="app_theme">Motyw aplikacji</string>
+<string name="theme_light">Jasny</string>
+<string name="theme_dark">Ciemny</string>
+<string name="theme_system">Systemowy</string>
+<string name="language">Język</string>
+<string name="language_polish">Polski</string>
+<string name="language_english">English</string>
+<string name="back">Wróć</string>
+<string name="app_info">Informacje o aplikacji</string>
+
+<!-- Notifications -->
+<string name="notification_channel_name">Przypomnienia o nawykach</string>
+<string name="notification_channel_description">Powiadomienia przypominające o wykonaniu nawyku</string>
+<string name="notification_title">Czas na Twój nawyk!</string>
+<string name="notification_text">Nadszedł czas na wykonanie nawyku: %1$s</string>
+<string name="notification_content">Twój nawyk</string>
+
+<!-- Content Descriptions -->
+<string name="cd_settings">Ustawienia</string>
+<string name="cd_add_habit">Dodaj nawyk</string>
+<string name="cd_delete_habit">Usuń nawyk</string>
+<string name="cd_back">Wróć</string>
+<string name="cd_app_info">Informacje o aplikacji</string>
 </resources>

@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.startup.runtime)
     implementation(libs.androidx.work.runtime.ktx)
     implementation("androidx.compose.material:material-icons-extended-android:1.7.0-alpha08")
+    implementation(libs.androidx.appcompat)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

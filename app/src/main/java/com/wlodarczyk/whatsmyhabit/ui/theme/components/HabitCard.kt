@@ -4,27 +4,25 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wlodarczyk.whatsmyhabit.R
 import com.wlodarczyk.whatsmyhabit.model.Habit
 
 @Composable
 fun HabitCard(
     habit: Habit,
-    isEnglish: Boolean = false,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -71,8 +69,7 @@ fun HabitCard(
     ) {
         Column {
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -93,9 +90,7 @@ fun HabitCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = habit.name,
                         style = MaterialTheme.typography.bodyLarge.copy(
@@ -115,16 +110,13 @@ fun HabitCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "🕐 ${habit.time}",
+                            text = "🕗 ${habit.time}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         if (habit.streak > 0) {
-                            StreakBadge(
-                                streak = habit.streak,
-                                isEnglish = isEnglish
-                            )
+                            StreakBadge(streak = habit.streak)
                         }
                     }
                 }
@@ -137,7 +129,7 @@ fun HabitCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = if (isEnglish) "Delete habit" else "Usuń nawyk",
+                        contentDescription = stringResource(R.string.cd_delete_habit),
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -153,9 +145,7 @@ fun HabitCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(4.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        )
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                 )
             }
         }
@@ -165,12 +155,18 @@ fun HabitCard(
 @Composable
 fun StreakBadge(
     streak: Int,
-    isEnglish: Boolean,
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         visible = true
+    }
+
+    // określenie formy słowa "dzień/dni" w zależności od liczby
+    val daysText = when {
+        streak == 1 -> stringResource(R.string.streak_days_one)
+        streak % 10 in 2..4 && streak % 100 !in 12..14 -> stringResource(R.string.streak_days_few)
+        else -> stringResource(R.string.streak_days_many)
     }
 
     AnimatedVisibility(
@@ -193,22 +189,9 @@ fun StreakBadge(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                Text(text = "🔥", fontSize = 12.sp)
                 Text(
-                    text = "🔥",
-                    fontSize = 12.sp
-                )
-                Text(
-                    text = "$streak ${
-                        if (isEnglish) {
-                            if (streak == 1) "day" else "days"
-                        } else {
-                            when {
-                                streak == 1 -> "dzień"
-                                streak % 10 in 2..4 && streak % 100 !in 12..14 -> "dni"
-                                else -> "dni"
-                            }
-                        }
-                    }",
+                    text = "$streak $daysText",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp

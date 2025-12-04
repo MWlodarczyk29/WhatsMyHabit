@@ -4,16 +4,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.wlodarczyk.whatsmyhabit.R
 
 @Composable
-fun HabitStatsHeader(doneCount: Int, totalCount: Int, isEnglish: Boolean = false) {
+fun HabitStatsHeader(
+    doneCount: Int,
+    totalCount: Int,
+    modifier: Modifier = Modifier
+) {
     Text(
-        text = if (isEnglish)
-            "Completed habits: $doneCount / $totalCount"
-        else
-            "Liczba ukończonych nawyków: $doneCount / $totalCount",
-        modifier = Modifier.padding(8.dp)
+        text = stringResource(R.string.completed_habits, doneCount, totalCount),
+        modifier = modifier.padding(8.dp)
     )
 }
-
