@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation("androidx.compose.material:material-icons-extended-android:1.7.0-alpha08")
     implementation(libs.androidx.appcompat)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
