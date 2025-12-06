@@ -5,24 +5,19 @@ import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
 import com.wlodarczyk.whatsmyhabit.ui.theme.components.*
 
-/**
- * Komponent zarządzający wszystkimi dialogami na głównym ekranie
- *
- * ZMIANA: onConfirmAddDialog przyjmuje teraz 4 parametry (dodano color)
- */
 @Composable
 fun MainScreenDialogs(
-    // Dialog dodawania nawyku
+    // dialog dodawania nawyku
     showAddDialog: Boolean,
     onDismissAddDialog: () -> Unit,
     onConfirmAddDialog: (String, String, HabitFrequency, Long) -> Unit,  // ← DODANO: Long (color)
 
-    // Dialog usuwania nawyku
+    // dialog usuwania nawyku
     habitToDelete: Habit?,
     onDismissDeleteDialog: () -> Unit,
     onConfirmDelete: () -> Unit,
 
-    // Dialogi pozwoleń na powiadomienia
+    // dialogi pozwoleń na powiadomienia
     showNotificationExplanation: Boolean,
     onDismissNotificationExplanation: () -> Unit,
     onConfirmNotificationPermission: () -> Unit,
@@ -30,7 +25,7 @@ fun MainScreenDialogs(
     onDismissNotificationDenied: () -> Unit,
     onOpenSettingsFromNotificationDenied: () -> Unit,
 
-    // Dialog uprawnień o dokładne alarmy
+    // dialog uprawnień o dokładne alarmy
     showAlarmExplanation: Boolean,
     onDismissAlarmExplanation: () -> Unit,
     onConfirmAlarmPermission: () -> Unit,
@@ -38,15 +33,15 @@ fun MainScreenDialogs(
     onDismissAlarmDenied: () -> Unit,
     onOpenSettingsFromAlarmDenied: () -> Unit
 ) {
-    // Dialog dodawania nawyku
+    // dialog dodawania nawyku
     if (showAddDialog) {
         AddHabitDialog(
             onDismiss = onDismissAddDialog,
-            onConfirm = onConfirmAddDialog  // Teraz pasuje sygnatura: (String, String, HabitFrequency, Long) -> Unit
+            onConfirm = onConfirmAddDialog
         )
     }
 
-    // Dialog usuwania nawyku
+    // dialog usuwania nawyku
     if (habitToDelete != null) {
         DeleteHabitDialog(
             habit = habitToDelete,
@@ -55,7 +50,7 @@ fun MainScreenDialogs(
         )
     }
 
-    // Dialog wyjaśniający uprawnienie do powiadomień
+    // dialog wyjaśniający uprawnienie do powiadomień
     if (showNotificationExplanation) {
         NotificationPermissionExplanationDialog(
             onDismiss = onDismissNotificationExplanation,
@@ -63,7 +58,7 @@ fun MainScreenDialogs(
         )
     }
 
-    // Dialog informujący o braku uprawnienia do powiadomień
+    // dialog informujący o braku uprawnienia do powiadomień
     if (showNotificationDeniedDialog) {
         NotificationPermissionDeniedDialog(
             onDismiss = onDismissNotificationDenied,
@@ -71,7 +66,7 @@ fun MainScreenDialogs(
         )
     }
 
-    // Dialog wyjaśniający uprawnienie do dokładnych alarmów
+    // dialog wyjaśniający uprawnienie do dokładnych alarmów
     if (showAlarmExplanation) {
         ExactAlarmPermissionExplanationDialog(
             onDismiss = onDismissAlarmExplanation,
@@ -79,7 +74,7 @@ fun MainScreenDialogs(
         )
     }
 
-    // Dialog informujący o braku uprawnienia do dokładnych alarmów
+    // dialog informujący o braku uprawnienia do dokładnych alarmów
     if (showAlarmDeniedDialog) {
         ExactAlarmPermissionDeniedDialog(
             onDismiss = onDismissAlarmDenied,
