@@ -1,5 +1,6 @@
 package com.wlodarczyk.whatsmyhabit.model
 
+import androidx.compose.ui.graphics.Color
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -11,7 +12,8 @@ data class Habit(
     val frequency: HabitFrequency = HabitFrequency.DAILY,
     val createdDate: Long = System.currentTimeMillis(),
     var lastCompletedDate: Long? = null,
-    var streak: Int = 0
+    var streak: Int = 0,
+    val color: Long = HabitColor.GRAY.value // NOWE POLE - kolor nawyku
 ) {
     fun shouldReset(): Boolean {
         if (!done || lastCompletedDate == null) return false
@@ -21,6 +23,7 @@ data class Habit(
 
         return today > completedDay
     }
+
     fun calculateStreak(): Int {
         if (lastCompletedDate == null) return 0
 
@@ -66,4 +69,25 @@ data class Habit(
         calendar.set(Calendar.MILLISECOND, 0)
         return calendar.timeInMillis
     }
+
+    //zwracanie koloru nawyku jako compose color
+    fun getColor(): Color = Color(color)
+}
+
+//predefiniowane kolory nawyków
+enum class HabitColor(val value: Long, val displayNamePL: String, val displayNameEN: String) {
+    RED(0xFFEF5350, "Czerwony", "Red"),
+    ORANGE(0xFFFF9800, "Pomarańczowy", "Orange"),
+    YELLOW(0xFFFFEB3B, "Żółty", "Yellow"),
+    GREEN(0xFF66BB6A, "Zielony", "Green"),
+    BLUE(0xFF42A5F5, "Niebieski", "Blue"),
+    PURPLE(0xFFAB47BC, "Fioletowy", "Purple"),
+    BROWN(0xFF8D6E63, "Brązowy", "Brown"),
+    GRAY(0xFF90A4AE, "Szary", "Gray");
+
+    fun getDisplayName(isEnglish: Boolean): String {
+        return if (isEnglish) displayNameEN else displayNamePL
+    }
+
+    fun toColor(): Color = Color(value)
 }

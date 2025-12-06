@@ -3,15 +3,22 @@ package com.wlodarczyk.whatsmyhabit.ui.theme.components
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -20,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.wlodarczyk.whatsmyhabit.R
 import com.wlodarczyk.whatsmyhabit.model.Habit
 
+// karta wyświetlająca pojedynczy nawyk z animacjami i wyrazistym kolorem
 @Composable
 fun HabitCard(
     habit: Habit,
@@ -27,6 +35,9 @@ fun HabitCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val habitColor = habit.getColor()
+    val isDarkTheme = isSystemInDarkTheme()
+
     val scale by animateFloatAsState(
         targetValue = if (habit.done) 0.98f else 1f,
         animationSpec = spring(
@@ -54,6 +65,20 @@ fun HabitCard(
         }
     }
 
+    // kolor tła karty - pełny kolor z alpha lub szary gdy wykonane
+    val cardBackgroundColor = if (habit.done) {
+        // gdy wykonane - szare tło
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+    } else {
+        // gdy niewykonane - kolor nawyku z dostosowaniem do motywu
+        if (isDarkTheme) {
+            habitColor.copy(alpha = 0.25f)
+        } else {
+            // jasny motyw - mocniejszy kolor dla lepszej widoczności
+            habitColor.copy(alpha = 0.35f)
+        }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -61,30 +86,59 @@ fun HabitCard(
             .scale(scale),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (habit.done)
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-            else
-                MaterialTheme.colorScheme.surface
+            containerColor = cardBackgroundColor
         )
     ) {
         Column {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // lewy pasek koloru
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(habitColor)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // checkbox z wyraźnym borderem
                 Box(
                     modifier = Modifier
                         .scale(checkboxScale)
-                        .size(28.dp),
+                        .size(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    // border wokół checkboxa
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .border(
+                                width = 2.dp,
+                                color = if (isDarkTheme) {
+                                    Color.White.copy(alpha = 0.5f)
+                                } else {
+                                    Color.Black.copy(alpha = 0.6f)
+                                },
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                    )
+
+                    // checkbox
                     Checkbox(
                         checked = habit.done,
                         onCheckedChange = onCheckedChange,
                         colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.primary,
-                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                            checkedColor = habitColor,
+                            uncheckedColor = Color.Transparent,
+                            checkmarkColor = Color.White
+                        ),
+                        modifier = Modifier.size(28.dp)
                     )
                 }
 
@@ -116,7 +170,10 @@ fun HabitCard(
                         )
 
                         if (habit.streak > 0) {
-                            StreakBadge(streak = habit.streak)
+                            StreakBadge(
+                                streak = habit.streak,
+                                color = habitColor
+                            )
                         }
                     }
                 }
@@ -136,6 +193,7 @@ fun HabitCard(
                 }
             }
 
+            // dolny pasek gdy wykonane (w kolorze nawyku)
             AnimatedVisibility(
                 visible = habit.done,
                 enter = expandVertically() + fadeIn(),
@@ -145,7 +203,7 @@ fun HabitCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(4.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                        .background(habitColor)
                 )
             }
         }
@@ -155,6 +213,7 @@ fun HabitCard(
 @Composable
 fun StreakBadge(
     streak: Int,
+    color: Color = Color.Gray,
     modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -162,12 +221,25 @@ fun StreakBadge(
         visible = true
     }
 
-    // określenie formy słowa "dzień/dni" w zależności od liczby
     val daysText = when {
         streak == 1 -> stringResource(R.string.streak_days_one)
         streak % 10 in 2..4 && streak % 100 !in 12..14 -> stringResource(R.string.streak_days_few)
         else -> stringResource(R.string.streak_days_many)
     }
+
+    // sprawdzenie motywu i dostosowanie kolorów dla kontrastu
+    val isDarkTheme = isSystemInDarkTheme()
+    val badgeBackgroundColor = if (isDarkTheme) {
+        color.copy(alpha = 0.3f)
+    } else {
+        color.copy(alpha = 0.4f)
+    }
+    val badgeTextColor = if (isDarkTheme) {
+        color.copy(alpha = 0.9f)
+    } else {
+        color.copy(alpha = 1.0f).darken()
+    }
+
 
     AnimatedVisibility(
         visible = visible,
@@ -181,7 +253,7 @@ fun StreakBadge(
         Surface(
             modifier = modifier,
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.tertiaryContainer,
+            color = badgeBackgroundColor, // użycie nowego koloru tła
             tonalElevation = 2.dp
         ) {
             Row(
@@ -194,11 +266,21 @@ fun StreakBadge(
                     text = "$streak $daysText",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                        fontSize = 11.sp,
+                        color = badgeTextColor // użycie nowego koloru tekstu
+                    )
                 )
             }
         }
     }
+}
+
+// funkcja pomocnicza do przyciemniania koloru
+private fun Color.darken(factor: Float = 0.2f): Color {
+    return Color(
+        red = this.red * (1 - factor),
+        green = this.green * (1 - factor),
+        blue = this.blue * (1 - factor),
+        alpha = this.alpha
+    )
 }

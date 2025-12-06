@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+// viewmodel zarządzający stanem nawyków w aplikacji
 class HabitsViewModel(
     private val context: Context,
     private val alarmScheduler: AlarmScheduler
@@ -102,7 +103,13 @@ class HabitsViewModel(
         }
     }
 
-    fun addHabit(name: String, time: String, frequency: HabitFrequency = HabitFrequency.DAILY) {
+    //dodanie nawyku z kolorem
+    fun addHabit(
+        name: String,
+        time: String,
+        frequency: HabitFrequency = HabitFrequency.DAILY,
+        color: Long = 0xFF90A4AE  // domyślny szary
+    ) {
         val newHabit = Habit(
             id = System.currentTimeMillis().toInt(),
             name = name,
@@ -111,13 +118,14 @@ class HabitsViewModel(
             frequency = frequency,
             createdDate = System.currentTimeMillis(),
             lastCompletedDate = null,
-            streak = 0
+            streak = 0,
+            color = color
         )
 
         val updatedList = _habits.value + newHabit
         _habits.value = updatedList
 
-        Log.d(TAG, "Dodano nowy nawyk: ${newHabit.name}, planowanie alarmu")
+        Log.d(TAG, "Dodano nowy nawyk: ${newHabit.name} z kolorem: #${color.toString(16)}")
         alarmScheduler.scheduleAlarm(newHabit)
 
         viewModelScope.launch {
@@ -136,6 +144,7 @@ class HabitsViewModel(
             HabitDataStore.saveHabits(context, updatedList)
         }
     }
+
     fun toggleHabitDone(habitId: Int, isDone: Boolean) {
         val updatedList = _habits.value.map { habit ->
             if (habit.id == habitId) {
@@ -165,6 +174,5 @@ class HabitsViewModel(
 
     fun getDoneCount(): Int = _habits.value.count { it.done }
     fun getTotalActiveTodayCount(): Int = _habits.value.size
-
     fun getActiveTodayHabits(): List<Habit> = _habits.value
 }

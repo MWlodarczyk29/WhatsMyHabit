@@ -55,6 +55,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // sprawdź czy język się zmienił
+        val currentLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0]
+        } else {
+            resources.configuration.locale
+        }
+
+        val savedLanguage = runBlocking {
+            SettingsDataStore.getLanguagePreference(this@MainActivity).first()
+        }
+
+        val expectedLocale = when (savedLanguage) {
+            "EN" -> Locale.ENGLISH
+            else -> Locale("pl", "PL")
+        }
+
+        if (currentLocale.language != expectedLocale.language) {
+            // język się zmienił - przeładuj aktywność
+            recreate()
+        }
+    }
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(updateLocale(newBase))
     }

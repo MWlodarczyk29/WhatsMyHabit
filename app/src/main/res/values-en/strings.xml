@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Name -->
-    <string name="app_name">My Habits</string>
+    <string name="app_name">What\'s my habit?</string>
 
     <!-- Main Screen -->
     <string name="my_habits">My Habits</string>
@@ -20,6 +20,17 @@
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
     <string name="time_format">Time: %1$s</string>
+    <string name="choose_color">Choose color for your habit\'s card</string>
+
+    <!-- Colors -->
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_green">Green</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_brown">Brown</string>
+    <string name="color_gray">Gray</string>
 
     <!-- Habit Card -->
     <string name="delete_habit">Delete habit</string>
@@ -84,4 +95,3 @@
     <string name="cd_back">Back</string>
     <string name="cd_app_info">App info</string>
 </resources>
-

@@ -27,6 +27,7 @@ import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 import kotlinx.coroutines.delay
 import java.util.Calendar
+import androidx.compose.foundation.isSystemInDarkTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +42,9 @@ fun MainScreen(
     var recomposeKey by remember { mutableStateOf(0) }
     var showAddDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<Habit?>(null) }
-    var pendingHabitData by remember { mutableStateOf<Triple<String, String, HabitFrequency>?>(null) }
+
+    // ZMIANA: Dodano color do pendingHabitData
+    var pendingHabitData by remember { mutableStateOf<Quadruple<String, String, HabitFrequency, Long>?>(null) }
 
     // stany dialogów uprawnień
     var showNotificationExplanation by remember { mutableStateOf(false) }
@@ -53,11 +56,22 @@ fun MainScreen(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     // gradient tła
-    val gradientColors = listOf(
-        MaterialTheme.colorScheme.surface,
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        MaterialTheme.colorScheme.surface
-    )
+    val isDarkTheme = isSystemInDarkTheme()
+    val gradientColors = if (isDarkTheme) {
+        // Ciemny motyw - subtelny gradient
+        listOf(
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            MaterialTheme.colorScheme.surface
+        )
+    } else {
+        listOf(
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+            MaterialTheme.colorScheme.surface
+        )
+    }
 
     // przeładowanie danych przy starcie
     LaunchedEffect(Unit) {
@@ -146,102 +160,126 @@ fun MainScreen(
             }
         }
 
-        // dialogi
-        MainScreenDialogs(
-            showAddDialog = showAddDialog,
-            onDismissAddDialog = { showAddDialog = false },
-            onConfirmAddDialog = { name, time, frequency ->
-                showAddDialog = false
-                pendingHabitData = Triple(name, time, frequency)
-                handleAddHabitWithPermissions(
-                    permissionManager = permissionManager,
-                    onShowNotificationExplanation = { showNotificationExplanation = true },
-                    onShowAlarmExplanation = { showAlarmExplanation = true },
-                    onAddHabit = {
-                        viewModel.addHabit(name, time, frequency)
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.habit_added),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        pendingHabitData = null
-                    }
-                )
-            },
-            habitToDelete = habitToDelete,
-            onDismissDeleteDialog = { habitToDelete = null },
-            onConfirmDelete = {
-                habitToDelete?.let { habit ->
-                    viewModel.removeHabit(habit)
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.habit_deleted),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                habitToDelete = null
-            },
-            showNotificationExplanation = showNotificationExplanation,
-            onDismissNotificationExplanation = {
-                showNotificationExplanation = false
-                addHabitWithoutReminders(context, viewModel, pendingHabitData)
-                pendingHabitData = null
-            },
-            onConfirmNotificationPermission = {
-                showNotificationExplanation = false
-                permissionManager.requestNotificationPermission { granted ->
-                    if (granted) {
-                        if (!permissionManager.hasExactAlarmPermission()) {
-                            showAlarmExplanation = true
-                        } else {
-                            addHabitWithConfirmation(context, viewModel, pendingHabitData)
+        // ZMIANA: Dodano parametr color do callback'a
+        if (showAddDialog) {
+            AddHabitDialog(
+                onDismiss = { showAddDialog = false },
+                onConfirm = { name, time, frequency, color ->  // ← DODANO: color
+                    showAddDialog = false
+                    pendingHabitData = Quadruple(name, time, frequency, color)
+                    handleAddHabitWithPermissions(
+                        permissionManager = permissionManager,
+                        onShowNotificationExplanation = { showNotificationExplanation = true },
+                        onShowAlarmExplanation = { showAlarmExplanation = true },
+                        onAddHabit = {
+                            viewModel.addHabit(name, time, frequency, color)  // ← DODANO: color
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.habit_added),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             pendingHabitData = null
                         }
-                    } else {
-                        showNotificationDeniedDialog = true
+                    )
+                }
+            )
+        }
+
+        // Dialogi uprawnień
+        if (habitToDelete != null) {
+            DeleteHabitDialog(
+                habit = habitToDelete!!,
+                onDismiss = { habitToDelete = null },
+                onConfirm = {
+                    habitToDelete?.let { habit ->
+                        viewModel.removeHabit(habit)
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.habit_deleted),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    habitToDelete = null
+                }
+            )
+        }
+
+        if (showNotificationExplanation) {
+            NotificationPermissionExplanationDialog(
+                onDismiss = {
+                    showNotificationExplanation = false
+                    addHabitWithoutReminders(context, viewModel, pendingHabitData)
+                    pendingHabitData = null
+                },
+                onConfirm = {
+                    showNotificationExplanation = false
+                    permissionManager.requestNotificationPermission { granted ->
+                        if (granted) {
+                            if (!permissionManager.hasExactAlarmPermission()) {
+                                showAlarmExplanation = true
+                            } else {
+                                addHabitWithConfirmation(context, viewModel, pendingHabitData)
+                                pendingHabitData = null
+                            }
+                        } else {
+                            showNotificationDeniedDialog = true
+                        }
                     }
                 }
-            },
-            showNotificationDeniedDialog = showNotificationDeniedDialog,
-            onDismissNotificationDenied = {
-                showNotificationDeniedDialog = false
-                addHabitWithoutReminders(context, viewModel, pendingHabitData)
-                pendingHabitData = null
-            },
-            onOpenSettingsFromNotificationDenied = {
-                permissionManager.openAppSettings()
-                showNotificationDeniedDialog = false
-            },
-            showAlarmExplanation = showAlarmExplanation,
-            onDismissAlarmExplanation = {
-                showAlarmExplanation = false
-                addHabitWithDelayedReminders(context, viewModel, pendingHabitData)
-                pendingHabitData = null
-            },
-            onConfirmAlarmPermission = {
-                showAlarmExplanation = false
-                permissionManager.requestExactAlarmPermission { granted ->
-                    if (granted) {
-                        addHabitWithConfirmation(context, viewModel, pendingHabitData)
-                        pendingHabitData = null
-                    } else {
-                        showAlarmDeniedDialog = true
+            )
+        }
+
+        if (showNotificationDeniedDialog) {
+            NotificationPermissionDeniedDialog(
+                onDismiss = {
+                    showNotificationDeniedDialog = false
+                    addHabitWithoutReminders(context, viewModel, pendingHabitData)
+                    pendingHabitData = null
+                },
+                onOpenSettings = {
+                    permissionManager.openAppSettings()
+                    showNotificationDeniedDialog = false
+                }
+            )
+        }
+
+        if (showAlarmExplanation) {
+            ExactAlarmPermissionExplanationDialog(
+                onDismiss = {
+                    showAlarmExplanation = false
+                    addHabitWithDelayedReminders(context, viewModel, pendingHabitData)
+                    pendingHabitData = null
+                },
+                onConfirm = {
+                    showAlarmExplanation = false
+                    permissionManager.requestExactAlarmPermission { granted ->
+                        if (granted) {
+                            addHabitWithConfirmation(context, viewModel, pendingHabitData)
+                            pendingHabitData = null
+                        } else {
+                            showAlarmDeniedDialog = true
+                        }
                     }
                 }
-            },
-            showAlarmDeniedDialog = showAlarmDeniedDialog,
-            onDismissAlarmDenied = {
-                showAlarmDeniedDialog = false
-                addHabitWithDelayedReminders(context, viewModel, pendingHabitData)
-                pendingHabitData = null
-            },
-            onOpenSettingsFromAlarmDenied = {
-                permissionManager.openAppSettings()
-                showAlarmDeniedDialog = false
-            }
-        )
+            )
+        }
+
+        if (showAlarmDeniedDialog) {
+            ExactAlarmPermissionDeniedDialog(
+                onDismiss = {
+                    showAlarmDeniedDialog = false
+                    addHabitWithDelayedReminders(context, viewModel, pendingHabitData)
+                    pendingHabitData = null
+                },
+                onOpenSettings = {
+                    permissionManager.openAppSettings()
+                    showAlarmDeniedDialog = false
+                }
+            )
+        }
     }
 }
+
 // top bar ekranu głównego
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -281,6 +319,9 @@ private fun MainScreenTopBar(
     )
 }
 
+// HELPER CLASS dla 4 parametrów (name, time, frequency, color)
+data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
 private fun handleAddHabitWithPermissions(
     permissionManager: PermissionManager,
     onShowNotificationExplanation: () -> Unit,
@@ -294,13 +335,14 @@ private fun handleAddHabitWithPermissions(
     }
 }
 
+// ZMIANA: Dodano obsługę koloru
 private fun addHabitWithoutReminders(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Triple<String, String, HabitFrequency>?
+    pendingData: Quadruple<String, String, HabitFrequency, Long>?
 ) {
-    pendingData?.let { (name, time, frequency) ->
-        viewModel.addHabit(name, time, frequency)
+    pendingData?.let { (name, time, frequency, color) ->
+        viewModel.addHabit(name, time, frequency, color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added_no_reminders),
@@ -312,10 +354,10 @@ private fun addHabitWithoutReminders(
 private fun addHabitWithDelayedReminders(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Triple<String, String, HabitFrequency>?
+    pendingData: Quadruple<String, String, HabitFrequency, Long>?
 ) {
-    pendingData?.let { (name, time, frequency) ->
-        viewModel.addHabit(name, time, frequency)
+    pendingData?.let { (name, time, frequency, color) ->
+        viewModel.addHabit(name, time, frequency, color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added_reminders_delayed),
@@ -327,10 +369,10 @@ private fun addHabitWithDelayedReminders(
 private fun addHabitWithConfirmation(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Triple<String, String, HabitFrequency>?
+    pendingData: Quadruple<String, String, HabitFrequency, Long>?
 ) {
-    pendingData?.let { (name, time, frequency) ->
-        viewModel.addHabit(name, time, frequency)
+    pendingData?.let { (name, time, frequency, color) ->
+        viewModel.addHabit(name, time, frequency, color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added),
