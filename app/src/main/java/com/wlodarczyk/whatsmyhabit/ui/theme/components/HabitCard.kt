@@ -2,6 +2,7 @@ package com.wlodarczyk.whatsmyhabit.ui.theme.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -217,19 +218,6 @@ fun StreakBadge(
         else -> stringResource(R.string.streak_days_many)
     }
 
-    val isDarkTheme = isSystemInDarkTheme()
-    val badgeBackgroundColor = if (isDarkTheme) {
-        color.copy(alpha = 0.3f)
-    } else {
-        color.copy(alpha = 0.4f)
-    }
-    val badgeTextColor = if (isDarkTheme) {
-        color.copy(alpha = 0.9f)
-    } else {
-        color.copy(alpha = 1.0f).darken()
-    }
-
-
     AnimatedVisibility(
         visible = visible,
         enter = scaleIn(
@@ -242,8 +230,9 @@ fun StreakBadge(
         Surface(
             modifier = modifier,
             shape = RoundedCornerShape(12.dp),
-            color = badgeBackgroundColor,
-            tonalElevation = 2.dp
+            color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.6f),
+            tonalElevation = 2.dp,
+            border = BorderStroke(1.dp, color.copy(alpha = 0.8f))
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -255,14 +244,15 @@ fun StreakBadge(
                     text = "$streak $daysText",
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        color = badgeTextColor
-                    )
+                        fontSize = 11.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
+
 
 private fun Color.darken(factor: Float = 0.2f): Color {
     return Color(
