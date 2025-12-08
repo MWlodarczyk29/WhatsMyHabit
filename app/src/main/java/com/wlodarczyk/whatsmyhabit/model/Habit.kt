@@ -70,11 +70,9 @@ data class Habit(
         return calendar.timeInMillis
     }
 
-    //zwracanie koloru nawyku jako compose color
     fun getColor(): Color = Color(color)
 }
 
-//predefiniowane kolory nawyków
 enum class HabitColor(val value: Long, val displayNamePL: String, val displayNameEN: String) {
     RED(0xFFEF5350, "Czerwony", "Red"),
     ORANGE(0xFFFF9800, "Pomarańczowy", "Orange"),

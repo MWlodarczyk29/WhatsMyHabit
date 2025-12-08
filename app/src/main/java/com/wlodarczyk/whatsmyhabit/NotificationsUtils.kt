@@ -21,7 +21,6 @@ object NotificationUtils {
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // używamy stringResource z Context - automatycznie w odpowiednim języku!
             val name = context.getString(R.string.notification_channel_name)
             val descriptionText = context.getString(R.string.notification_channel_description)
             val importance = NotificationManager.IMPORTANCE_HIGH
@@ -29,36 +28,27 @@ object NotificationUtils {
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
 
-                // ustawienie domyślnego dźwięku powiadomienia
                 setSound(
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
                     null
                 )
 
-                // konfiguracja wibracji
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 250, 250, 250)
 
-                // widoczność na ekranie blokady
                 lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
-
-                // włączenie diody LED
-                enableLights(true)
             }
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // WAŻNE: jeśli kanał już istnieje, Android go zaktualizuje
             notificationManager.createNotificationChannel(channel)
 
             Log.d(TAG, "Kanał powiadomień utworzony/zaktualizowany: $name")
         }
     }
     fun showHabitNotification(context: Context, habitName: String, habitId: Int) {
-        // WAŻNE: przed wyświetleniem powiadomienia, zawsze odśwież kanał
         createNotificationChannel(context)
 
-        // intent otwierający główny ekran aplikacji po kliknięciu powiadomienia
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -71,7 +61,6 @@ object NotificationUtils {
 
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
-        // teksty powiadomienia - automatycznie w aktualnym języku aplikacji
         val title = context.getString(R.string.notification_title)
         val text = context.getString(R.string.notification_text, habitName)
 
@@ -95,7 +84,6 @@ object NotificationUtils {
         val notificationManager = NotificationManagerCompat.from(context)
 
         try {
-            // sprawdzenie uprawnień do powiadomień
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS

@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wlodarczyk.whatsmyhabit.R
 
-// nagłowek wyświetlający statystki z progress barem
 @Composable
 fun HabitStatsHeader(
     doneCount: Int,
@@ -26,7 +25,6 @@ fun HabitStatsHeader(
     val progress = if (totalCount > 0) doneCount.toFloat() / totalCount.toFloat() else 0f
     val percentage = (progress * 100).toInt()
 
-    // Animowany progress
     var animatedProgress by remember { mutableStateOf(0f) }
 
     LaunchedEffect(progress) {
@@ -47,7 +45,6 @@ fun HabitStatsHeader(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // tekst statystyk
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -61,7 +58,6 @@ fun HabitStatsHeader(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // procent
             if (totalCount > 0) {
                 Text(
                     text = "$percentage%",
@@ -78,7 +74,6 @@ fun HabitStatsHeader(
             }
         }
 
-        // progress bar
         if (totalCount > 0) {
             Spacer(modifier = Modifier.height(8.dp))
 

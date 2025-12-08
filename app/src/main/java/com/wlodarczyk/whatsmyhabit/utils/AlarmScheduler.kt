@@ -54,7 +54,7 @@ class AlarmScheduler(private val context: Context) {
             putExtra("habit_id", habit.id)
             putExtra("habit_name", habit.name)
             putExtra("habit_time", habit.time)
-            putExtra("habit_frequency", habit.frequency.name) // DODANO
+            putExtra("habit_frequency", habit.frequency.name)
         }
 
         return PendingIntent.getBroadcast(

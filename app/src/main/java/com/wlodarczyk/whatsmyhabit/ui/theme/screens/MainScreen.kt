@@ -38,27 +38,21 @@ fun MainScreen(
     val context = LocalContext.current
     val habits by viewModel.habits.collectAsState()
 
-    // stan UI
     var recomposeKey by remember { mutableStateOf(0) }
     var showAddDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<Habit?>(null) }
 
-    // ZMIANA: Dodano color do pendingHabitData
     var pendingHabitData by remember { mutableStateOf<Quadruple<String, String, HabitFrequency, Long>?>(null) }
 
-    // stany dialogów uprawnień
     var showNotificationExplanation by remember { mutableStateOf(false) }
     var showAlarmExplanation by remember { mutableStateOf(false) }
     var showNotificationDeniedDialog by remember { mutableStateOf(false) }
     var showAlarmDeniedDialog by remember { mutableStateOf(false) }
 
-    // konfiguracja scroll behavior dla top bar
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
-    // gradient tła
     val isDarkTheme = isSystemInDarkTheme()
     val gradientColors = if (isDarkTheme) {
-        // Ciemny motyw - subtelny gradient
         listOf(
             MaterialTheme.colorScheme.surface,
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -73,19 +67,17 @@ fun MainScreen(
         )
     }
 
-    // przeładowanie danych przy starcie
     LaunchedEffect(Unit) {
         viewModel.reloadFromDataStore()
     }
 
-    // automatyczne odświeżanie przy zmianie dnia
     LaunchedEffect(Unit) {
         delay(1000)
         var lastCheckedDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
         var lastCheckedYear = Calendar.getInstance().get(Calendar.YEAR)
 
         while (true) {
-            delay(60000) // sprawdzaj co minutę
+            delay(60000)
             val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
@@ -160,7 +152,6 @@ fun MainScreen(
             }
         }
 
-        // ZMIANA: Dodano parametr color do callback'a
         if (showAddDialog) {
             AddHabitDialog(
                 onDismiss = { showAddDialog = false },
@@ -185,7 +176,6 @@ fun MainScreen(
             )
         }
 
-        // Dialogi uprawnień
         if (habitToDelete != null) {
             DeleteHabitDialog(
                 habit = habitToDelete!!,
@@ -280,7 +270,6 @@ fun MainScreen(
     }
 }
 
-// top bar ekranu głównego
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScreenTopBar(
@@ -319,7 +308,6 @@ private fun MainScreenTopBar(
     )
 }
 
-// HELPER CLASS dla 4 parametrów (name, time, frequency, color)
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 private fun handleAddHabitWithPermissions(
@@ -335,7 +323,6 @@ private fun handleAddHabitWithPermissions(
     }
 }
 
-// ZMIANA: Dodano obsługę koloru
 private fun addHabitWithoutReminders(
     context: android.content.Context,
     viewModel: HabitsViewModel,

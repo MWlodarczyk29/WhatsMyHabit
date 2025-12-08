@@ -183,7 +183,6 @@ fun SettingsScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
-            // SEKCJA JĘZYKA
             Text(
                 text = stringResource(R.string.language),
                 style = MaterialTheme.typography.titleLarge
@@ -207,7 +206,6 @@ fun SettingsScreen(
                                 onClick = {
                                     scope.launch {
                                         SettingsDataStore.saveLanguagePreference(context, key)
-                                        // ważne: przeładuj aktywność żeby zastosować nowy język
                                         onLanguageChanged()
                                     }
                                 },

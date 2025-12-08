@@ -21,11 +21,9 @@ class HabitResetWorker(
         return try {
             Log.d(TAG, "Rozpoczęto resetowanie nawyków o północy")
 
-            // pobranie wszystkich nawyków
             val habits = HabitDataStore.getHabitsFlow(applicationContext).first()
             Log.d(TAG, "Pobrano ${habits.size} nawyków do przetworzenia")
 
-            // resetowanie nawyków, które wymagają resetu
             val updatedHabits = habits.map { habit ->
                 if (habit.shouldReset()) {
                     Log.d(TAG, "Resetowanie nawyku: ${habit.name}")
@@ -35,20 +33,16 @@ class HabitResetWorker(
                 }
             }
 
-            // zapisanie zaktualizowanych nawyków
             HabitDataStore.saveHabits(applicationContext, updatedHabits)
 
-            // inicjalizacja schedulera alarmów
             val alarmScheduler = AlarmScheduler(applicationContext)
 
-            // anulowanie wszystkich starych alarmów
             habits.forEach { habit ->
                 alarmScheduler.cancelAlarm(habit)
             }
 
             Log.d(TAG, "Planowanie alarmów dla ${updatedHabits.size} nawyków na nowy dzień")
 
-            // zaplanowanie nowych alarmów
             updatedHabits.forEach { habit ->
                 Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)

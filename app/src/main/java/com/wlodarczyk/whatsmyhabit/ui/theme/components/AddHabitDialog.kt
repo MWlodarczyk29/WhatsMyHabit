@@ -58,7 +58,7 @@ fun AddHabitDialog(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                //pole tekstowe - nazwa
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -69,7 +69,6 @@ fun AddHabitDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // wybór godziny powtarzania nawyku
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,7 +89,6 @@ fun AddHabitDialog(
                 Divider()
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // wybór koloru dla karty nawyku
                 Text(
                     text = stringResource(R.string.choose_color),
                     style = MaterialTheme.typography.labelLarge
@@ -98,12 +96,10 @@ fun AddHabitDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // paleta kolorów - 2 rzędy po 4 kolory
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // pierwszy rząd
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -122,7 +118,6 @@ fun AddHabitDialog(
                         }
                     }
 
-                    // drugi rząd
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -163,7 +158,6 @@ fun AddHabitDialog(
     )
 }
 
-//przycisk wyboru koloru
 @Composable
 private fun ColorButton(
     color: HabitColor,

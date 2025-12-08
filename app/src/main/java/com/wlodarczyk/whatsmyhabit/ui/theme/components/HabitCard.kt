@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.wlodarczyk.whatsmyhabit.R
 import com.wlodarczyk.whatsmyhabit.model.Habit
 
-// karta wyświetlająca pojedynczy nawyk z animacjami i wyrazistym kolorem
 @Composable
 fun HabitCard(
     habit: Habit,
@@ -65,16 +64,12 @@ fun HabitCard(
         }
     }
 
-    // kolor tła karty - pełny kolor z alpha lub szary gdy wykonane
     val cardBackgroundColor = if (habit.done) {
-        // gdy wykonane - szare tło
         MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
     } else {
-        // gdy niewykonane - kolor nawyku z dostosowaniem do motywu
         if (isDarkTheme) {
             habitColor.copy(alpha = 0.25f)
         } else {
-            // jasny motyw - mocniejszy kolor dla lepszej widoczności
             habitColor.copy(alpha = 0.35f)
         }
     }
@@ -96,7 +91,6 @@ fun HabitCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // lewy pasek koloru
                 Box(
                     modifier = Modifier
                         .width(4.dp)
@@ -107,14 +101,12 @@ fun HabitCard(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // checkbox z wyraźnym borderem
                 Box(
                     modifier = Modifier
                         .scale(checkboxScale)
                         .size(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // border wokół checkboxa
                     Box(
                         modifier = Modifier
                             .size(28.dp)
@@ -129,7 +121,6 @@ fun HabitCard(
                             )
                     )
 
-                    // checkbox
                     Checkbox(
                         checked = habit.done,
                         onCheckedChange = onCheckedChange,
@@ -193,7 +184,6 @@ fun HabitCard(
                 }
             }
 
-            // dolny pasek gdy wykonane (w kolorze nawyku)
             AnimatedVisibility(
                 visible = habit.done,
                 enter = expandVertically() + fadeIn(),
@@ -227,7 +217,6 @@ fun StreakBadge(
         else -> stringResource(R.string.streak_days_many)
     }
 
-    // sprawdzenie motywu i dostosowanie kolorów dla kontrastu
     val isDarkTheme = isSystemInDarkTheme()
     val badgeBackgroundColor = if (isDarkTheme) {
         color.copy(alpha = 0.3f)
@@ -253,7 +242,7 @@ fun StreakBadge(
         Surface(
             modifier = modifier,
             shape = RoundedCornerShape(12.dp),
-            color = badgeBackgroundColor, // użycie nowego koloru tła
+            color = badgeBackgroundColor,
             tonalElevation = 2.dp
         ) {
             Row(
@@ -267,7 +256,7 @@ fun StreakBadge(
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp,
-                        color = badgeTextColor // użycie nowego koloru tekstu
+                        color = badgeTextColor
                     )
                 )
             }
@@ -275,7 +264,6 @@ fun StreakBadge(
     }
 }
 
-// funkcja pomocnicza do przyciemniania koloru
 private fun Color.darken(factor: Float = 0.2f): Color {
     return Color(
         red = this.red * (1 - factor),

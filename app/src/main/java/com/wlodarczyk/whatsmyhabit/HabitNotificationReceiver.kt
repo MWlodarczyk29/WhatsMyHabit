@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 
-// receiver dla powiadomień o nawykach
 class HabitNotificationReceiver : BroadcastReceiver() {
 
     companion object {
@@ -27,7 +26,6 @@ class HabitNotificationReceiver : BroadcastReceiver() {
         Log.d(TAG, "=== POWIADOMIENIE START ===")
         Log.d(TAG, "Habit: $habitName (ID: $habitId)")
 
-        // KLUCZOWE: tworzenie Context z odpowiednim językiem
         val localizedContext = createLocalizedContext(context)
 
         Log.d(TAG, "Locale: ${localizedContext.resources.configuration.locales[0]}")
@@ -37,7 +35,6 @@ class HabitNotificationReceiver : BroadcastReceiver() {
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            // używamy zlokalizowanego Context
             NotificationUtils.showHabitNotification(localizedContext, habitName, habitId)
         } else {
             Log.e(TAG, "Brak uprawnień do powiadomień")
@@ -48,32 +45,24 @@ class HabitNotificationReceiver : BroadcastReceiver() {
         }
     }
 
-     // tworzy Context z odpowiednim Locale na podstawie ustawień użytkownika
-     // to jest KLUCZOWA funkcja - bez niej powiadomienia zawsze są w języku systemowym!
-
     private fun createLocalizedContext(context: Context): Context {
         return try {
-            // odczytanie preferencji języka z DataStore
             val languagePreference = runBlocking {
                 SettingsDataStore.getLanguagePreference(context).first()
             }
 
             Log.d(TAG, "Preferencja języka z DataStore: $languagePreference")
 
-            // stwórz odpowiednie Locale
             val locale = when (languagePreference) {
                 "EN" -> Locale.ENGLISH
                 else -> Locale("pl", "PL")
             }
 
-            // ustaw jako domyślne
             Locale.setDefault(locale)
 
-            // stwórz nową konfigurację
             val config = context.resources.configuration
             config.setLocale(locale)
 
-            // zwróć Context z nową konfiguracją
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 context.createConfigurationContext(config)
             } else {
@@ -83,7 +72,6 @@ class HabitNotificationReceiver : BroadcastReceiver() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd podczas tworzenia lokalizowanego Context", e)
-            // w razie błędu zwróć oryginalny Context
             context
         }
     }

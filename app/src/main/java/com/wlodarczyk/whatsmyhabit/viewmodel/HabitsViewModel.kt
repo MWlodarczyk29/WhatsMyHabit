@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-// viewmodel zarządzający stanem nawyków w aplikacji
 class HabitsViewModel(
     private val context: Context,
     private val alarmScheduler: AlarmScheduler
@@ -88,14 +87,12 @@ class HabitsViewModel(
 
     private fun rescheduleAllAlarms() {
         viewModelScope.launch {
-            // anuluj wszystkie istniejące alarmy
             _habits.value.forEach { habit ->
                 alarmScheduler.cancelAlarm(habit)
             }
 
             Log.d(TAG, "Planowanie alarmów dla ${_habits.value.size} nawyków")
 
-            // zaplanuj nowe alarmy
             _habits.value.forEach { habit ->
                 Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)
@@ -103,12 +100,11 @@ class HabitsViewModel(
         }
     }
 
-    //dodanie nawyku z kolorem
     fun addHabit(
         name: String,
         time: String,
         frequency: HabitFrequency = HabitFrequency.DAILY,
-        color: Long = 0xFF90A4AE  // domyślny szary
+        color: Long = 0xFF90A4AE
     ) {
         val newHabit = Habit(
             id = System.currentTimeMillis().toInt(),

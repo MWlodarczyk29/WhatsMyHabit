@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // sprawdź czy język się zmienił
         val currentLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             resources.configuration.locales[0]
         } else {
@@ -74,7 +73,6 @@ class MainActivity : ComponentActivity() {
         }
 
         if (currentLocale.language != expectedLocale.language) {
-            // język się zmienił - przeładuj aktywność
             recreate()
         }
     }
