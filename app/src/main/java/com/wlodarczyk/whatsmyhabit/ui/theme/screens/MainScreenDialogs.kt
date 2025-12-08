@@ -3,14 +3,19 @@ package com.wlodarczyk.whatsmyhabit.ui.theme.screens
 import androidx.compose.runtime.Composable
 import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
-import com.wlodarczyk.whatsmyhabit.ui.theme.components.*
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.DeleteHabitDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.ExactAlarmPermissionDeniedDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.ExactAlarmPermissionExplanationDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.NotificationPermissionDeniedDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.NotificationPermissionExplanationDialog
 
 @Composable
 fun MainScreenDialogs(
     // dialog dodawania nawyku
     showAddDialog: Boolean,
     onDismissAddDialog: () -> Unit,
-    onConfirmAddDialog: (String, String, HabitFrequency, Long) -> Unit,  // ← DODANO: Long (color)
+    onConfirmAddDialog: (String, String, HabitFrequency, Long) -> Unit,
 
     // dialog usuwania nawyku
     habitToDelete: Habit?,

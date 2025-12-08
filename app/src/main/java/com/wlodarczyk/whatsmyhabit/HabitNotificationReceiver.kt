@@ -20,7 +20,8 @@ class HabitNotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         val habitId = intent?.getIntExtra("habit_id", 0) ?: 0
-        val habitName = intent?.getStringExtra("habit_name") ?: "Twój nawyk"
+        val habitName = intent?.getStringExtra("habit_name")
+            ?: context.getString(R.string.notification_content)
         val time = intent?.getStringExtra("habit_time") ?: ""
 
         Log.d(TAG, "=== POWIADOMIENIE START ===")

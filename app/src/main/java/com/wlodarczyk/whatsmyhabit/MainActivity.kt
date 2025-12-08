@@ -16,8 +16,8 @@ import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.utils.WorkManagerScheduler
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {

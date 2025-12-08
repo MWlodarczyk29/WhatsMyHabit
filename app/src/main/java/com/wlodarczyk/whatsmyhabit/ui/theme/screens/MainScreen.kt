@@ -1,16 +1,39 @@
 package com.wlodarczyk.whatsmyhabit.ui.theme.screens
 
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -22,12 +45,19 @@ import com.wlodarczyk.whatsmyhabit.R
 import com.wlodarczyk.whatsmyhabit.SettingsActivity
 import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
-import com.wlodarczyk.whatsmyhabit.ui.theme.components.*
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.AddHabitDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.DeleteHabitDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.EmptyHabitsState
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.ExactAlarmPermissionDeniedDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.ExactAlarmPermissionExplanationDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitStatsHeader
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.HabitsList
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.NotificationPermissionDeniedDialog
+import com.wlodarczyk.whatsmyhabit.ui.theme.components.NotificationPermissionExplanationDialog
 import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 import kotlinx.coroutines.delay
 import java.util.Calendar
-import androidx.compose.foundation.isSystemInDarkTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +112,6 @@ fun MainScreen(
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
             if (currentDay != lastCheckedDay || currentYear != lastCheckedYear) {
-                Log.d("MainScreen", "Wykryto nowy dzień. Przeładowywanie danych...")
                 viewModel.reloadFromDataStore()
                 lastCheckedDay = currentDay
                 lastCheckedYear = currentYear
@@ -155,7 +184,7 @@ fun MainScreen(
         if (showAddDialog) {
             AddHabitDialog(
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name, time, frequency, color ->  // ← DODANO: color
+                onConfirm = { name, time, frequency, color ->
                     showAddDialog = false
                     pendingHabitData = Quadruple(name, time, frequency, color)
                     handleAddHabitWithPermissions(
@@ -163,7 +192,7 @@ fun MainScreen(
                         onShowNotificationExplanation = { showNotificationExplanation = true },
                         onShowAlarmExplanation = { showAlarmExplanation = true },
                         onAddHabit = {
-                            viewModel.addHabit(name, time, frequency, color)  // ← DODANO: color
+                            viewModel.addHabit(name, time, frequency, color)
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.habit_added),

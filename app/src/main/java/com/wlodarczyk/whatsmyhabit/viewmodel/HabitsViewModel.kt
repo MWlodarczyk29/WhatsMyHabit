@@ -4,9 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.model.Habit
 import com.wlodarczyk.whatsmyhabit.model.HabitFrequency
-import com.wlodarczyk.whatsmyhabit.db.HabitDataStore
 import com.wlodarczyk.whatsmyhabit.utils.AlarmScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -91,10 +91,7 @@ class HabitsViewModel(
                 alarmScheduler.cancelAlarm(habit)
             }
 
-            Log.d(TAG, "Planowanie alarmów dla ${_habits.value.size} nawyków")
-
             _habits.value.forEach { habit ->
-                Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)
             }
         }
@@ -130,7 +127,6 @@ class HabitsViewModel(
     }
 
     fun removeHabit(habit: Habit) {
-        Log.d(TAG, "Usuwanie nawyku: ${habit.name}")
         alarmScheduler.cancelAlarm(habit)
 
         val updatedList = _habits.value.filter { it.id != habit.id }

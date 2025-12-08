@@ -13,7 +13,7 @@ data class Habit(
     val createdDate: Long = System.currentTimeMillis(),
     var lastCompletedDate: Long? = null,
     var streak: Int = 0,
-    val color: Long = HabitColor.GRAY.value // NOWE POLE - kolor nawyku
+    val color: Long = HabitColor.GRAY.value
 ) {
     fun shouldReset(): Boolean {
         if (!done || lastCompletedDate == null) return false
