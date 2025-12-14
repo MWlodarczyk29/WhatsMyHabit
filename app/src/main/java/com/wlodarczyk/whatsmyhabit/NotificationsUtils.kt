@@ -43,7 +43,7 @@ object NotificationUtils {
 
             notificationManager.createNotificationChannel(channel)
 
-            Log.d(TAG, "Kanał powiadomień utworzony/zaktualizowany: $name")
+            Log.d(TAG, "Notification chhannel updated/created: $name")
         }
     }
     fun showHabitNotification(context: Context, habitName: String, habitId: Int) {
@@ -89,16 +89,16 @@ object NotificationUtils {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                Log.e(TAG, "Brak uprawnień do powiadomień!")
+                Log.e(TAG, "No permission granted for notifications")
                 return
             }
 
-            Log.d(TAG, "Wyświetlanie powiadomienia ID: $habitId dla: $habitName w języku: ${context.resources.configuration.locales[0]}")
+            Log.d(TAG, "Showing ID notification: $habitId for: $habitName in language: ${context.resources.configuration.locales[0]}")
             notificationManager.notify(habitId, notification)
-            Log.d(TAG, "Powiadomienie wysłane pomyślnie")
+            Log.d(TAG, "Notification sent successfully")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Wyjątek podczas wyświetlania powiadomienia!", e)
+            Log.e(TAG, "Error while showing notification!", e)
         }
     }
 }

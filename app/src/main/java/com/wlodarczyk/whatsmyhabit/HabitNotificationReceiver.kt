@@ -24,7 +24,7 @@ class HabitNotificationReceiver : BroadcastReceiver() {
             ?: context.getString(R.string.notification_content)
         val time = intent?.getStringExtra("habit_time") ?: ""
 
-        Log.d(TAG, "=== POWIADOMIENIE START ===")
+        Log.d(TAG, "NOTIFICATION START")
         Log.d(TAG, "Habit: $habitName (ID: $habitId)")
 
         val localizedContext = createLocalizedContext(context)
@@ -38,7 +38,7 @@ class HabitNotificationReceiver : BroadcastReceiver() {
         ) {
             NotificationUtils.showHabitNotification(localizedContext, habitName, habitId)
         } else {
-            Log.e(TAG, "Brak uprawnień do powiadomień")
+            Log.e(TAG, "No permissons granted for notifications")
         }
 
         if (time.isNotEmpty()) {
@@ -52,7 +52,7 @@ class HabitNotificationReceiver : BroadcastReceiver() {
                 SettingsDataStore.getLanguagePreference(context).first()
             }
 
-            Log.d(TAG, "Preferencja języka z DataStore: $languagePreference")
+            Log.d(TAG, "Language preference from DataStore: $languagePreference")
 
             val locale = when (languagePreference) {
                 "EN" -> Locale.ENGLISH
@@ -72,7 +72,7 @@ class HabitNotificationReceiver : BroadcastReceiver() {
                 context
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Błąd podczas tworzenia lokalizowanego Context", e)
+            Log.e(TAG, "Error while creating localized context", e)
             context
         }
     }
@@ -123,7 +123,7 @@ class HabitNotificationReceiver : BroadcastReceiver() {
             }
         }
 
-        Log.d(TAG, "Alarm przełożony na następny dzień: ${calendar.time}")
+        Log.d(TAG, "Alarm rescheduled for: ${calendar.time}")
     }
 
     private fun calculateNextAlarmTime(time: String): java.util.Calendar {

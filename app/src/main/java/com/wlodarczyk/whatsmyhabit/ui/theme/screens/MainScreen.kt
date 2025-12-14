@@ -72,7 +72,7 @@ fun MainScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var habitToDelete by remember { mutableStateOf<Habit?>(null) }
 
-    var pendingHabitData by remember { mutableStateOf<Quadruple<String, String, HabitFrequency, Long>?>(null) }
+    var pendingHabitData by remember { mutableStateOf<PendingHabitData?>(null) }
 
     var showNotificationExplanation by remember { mutableStateOf(false) }
     var showAlarmExplanation by remember { mutableStateOf(false) }
@@ -186,7 +186,7 @@ fun MainScreen(
                 onDismiss = { showAddDialog = false },
                 onConfirm = { name, time, frequency, color ->
                     showAddDialog = false
-                    pendingHabitData = Quadruple(name, time, frequency, color)
+                    pendingHabitData = PendingHabitData(name, time, frequency, color)
                     handleAddHabitWithPermissions(
                         permissionManager = permissionManager,
                         onShowNotificationExplanation = { showNotificationExplanation = true },
@@ -337,7 +337,12 @@ private fun MainScreenTopBar(
     )
 }
 
-data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+data class PendingHabitData(
+    val name: String,
+    val time: String,
+    val frequency: HabitFrequency,
+    val color: Long
+)
 
 private fun handleAddHabitWithPermissions(
     permissionManager: PermissionManager,
@@ -355,10 +360,10 @@ private fun handleAddHabitWithPermissions(
 private fun addHabitWithoutReminders(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Quadruple<String, String, HabitFrequency, Long>?
+    pendingData: PendingHabitData?
 ) {
-    pendingData?.let { (name, time, frequency, color) ->
-        viewModel.addHabit(name, time, frequency, color)
+    pendingData?.let {
+        viewModel.addHabit(it.name, it.time, it.frequency, it.color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added_no_reminders),
@@ -370,10 +375,10 @@ private fun addHabitWithoutReminders(
 private fun addHabitWithDelayedReminders(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Quadruple<String, String, HabitFrequency, Long>?
+    pendingData: PendingHabitData?
 ) {
-    pendingData?.let { (name, time, frequency, color) ->
-        viewModel.addHabit(name, time, frequency, color)
+    pendingData?.let {
+        viewModel.addHabit(it.name, it.time, it.frequency, it.color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added_reminders_delayed),
@@ -385,10 +390,10 @@ private fun addHabitWithDelayedReminders(
 private fun addHabitWithConfirmation(
     context: android.content.Context,
     viewModel: HabitsViewModel,
-    pendingData: Quadruple<String, String, HabitFrequency, Long>?
+    pendingData: PendingHabitData?
 ) {
-    pendingData?.let { (name, time, frequency, color) ->
-        viewModel.addHabit(name, time, frequency, color)
+    pendingData?.let {
+        viewModel.addHabit(it.name, it.time, it.frequency, it.color)
         Toast.makeText(
             context,
             context.getString(R.string.habit_added),

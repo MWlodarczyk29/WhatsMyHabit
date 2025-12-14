@@ -19,14 +19,14 @@ class HabitResetWorker(
 
     override suspend fun doWork(): Result {
         return try {
-            Log.d(TAG, "Rozpoczęto resetowanie nawyków o północy")
+            Log.d(TAG, "Started resetting habits at midnight...")
 
             val habits = HabitDataStore.getHabitsFlow(applicationContext).first()
-            Log.d(TAG, "Pobrano ${habits.size} nawyków do przetworzenia")
+            Log.d(TAG, "Loaded ${habits.size} habits to process")
 
             val updatedHabits = habits.map { habit ->
                 if (habit.shouldReset()) {
-                    Log.d(TAG, "Resetowanie nawyku: ${habit.name}")
+                    Log.d(TAG, "Habit reset: ${habit.name}")
                     habit.copy(done = false)
                 } else {
                     habit
@@ -41,17 +41,17 @@ class HabitResetWorker(
                 alarmScheduler.cancelAlarm(habit)
             }
 
-            Log.d(TAG, "Planowanie alarmów dla ${updatedHabits.size} nawyków na nowy dzień")
+            Log.d(TAG, "Scheduling alarms for ${updatedHabits.size} habits for the next day")
 
             updatedHabits.forEach { habit ->
-                Log.d(TAG, "Planowanie alarmu dla: ${habit.name}")
+                Log.d(TAG, "Scheduling alarm for: ${habit.name}")
                 alarmScheduler.scheduleAlarm(habit)
             }
 
-            Log.d(TAG, "Zakończono resetowanie nawyków pomyślnie")
+            Log.d(TAG, "Habits reset ended successfully")
             Result.success()
         } catch (e: Exception) {
-            Log.e(TAG, "Błąd podczas resetowania nawyków", e)
+            Log.e(TAG, "Habits reset error", e)
             Result.failure()
         }
     }

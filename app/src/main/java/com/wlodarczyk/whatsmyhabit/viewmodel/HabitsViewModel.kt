@@ -55,7 +55,7 @@ class HabitsViewModel(
                     )
                 } else {
                     if (calculatedStreak != habit.streak) {
-                        Log.d(TAG, "Aktualizacja streak '${habit.name}': ${habit.streak} -> $calculatedStreak")
+                        Log.d(TAG, "Streak update '${habit.name}': ${habit.streak} -> $calculatedStreak")
                     }
                     habit.copy(streak = calculatedStreak)
                 }
@@ -71,10 +71,10 @@ class HabitsViewModel(
 
     fun reloadFromDataStore() {
         viewModelScope.launch {
-            Log.d(TAG, "Przeładowywanie z DataStore...")
+            Log.d(TAG, "Reloading from DataStore...")
 
             val freshData = HabitDataStore.getHabitsFlow(context).first()
-            Log.d(TAG, "Załadowano ${freshData.size} nawyków")
+            Log.d(TAG, "Loaded ${freshData.size} habits")
 
             val habitsWithUpdatedStreak = freshData.map { habit ->
                 habit.copy(streak = habit.calculateStreak())
@@ -118,7 +118,7 @@ class HabitsViewModel(
         val updatedList = _habits.value + newHabit
         _habits.value = updatedList
 
-        Log.d(TAG, "Dodano nowy nawyk: ${newHabit.name} z kolorem: #${color.toString(16)}")
+        Log.d(TAG, "Added new habit: ${newHabit.name} with color: #${color.toString(16)}")
         alarmScheduler.scheduleAlarm(newHabit)
 
         viewModelScope.launch {
@@ -142,7 +142,7 @@ class HabitsViewModel(
             if (habit.id == habitId) {
                 if (isDone) {
                     val newStreak = habit.updateStreakOnCompletion()
-                    Log.d(TAG, "Habit '${habit.name}' - nowy streak: $newStreak")
+                    Log.d(TAG, "Habit '${habit.name}' - new streak: $newStreak")
 
                     habit.copy(
                         done = true,

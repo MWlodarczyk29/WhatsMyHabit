@@ -19,7 +19,7 @@ class AlarmScheduler(private val context: Context) {
         val pendingIntent = createPendingIntent(habit)
         val calendar = calculateAlarmTime(habit.time)
 
-        Log.d("AlarmScheduler", "Planowanie alarmu dla: ${habit.name} na ${calendar.time}")
+        Log.d("AlarmScheduler", "Scheduling alarm for: ${habit.name} at ${calendar.time}")
 
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -46,7 +46,7 @@ class AlarmScheduler(private val context: Context) {
     fun cancelAlarm(habit: Habit) {
         val pendingIntent = createPendingIntent(habit)
         alarmManager.cancel(pendingIntent)
-        Log.d("AlarmScheduler", "Anulowano alarm dla: ${habit.name}")
+        Log.d("AlarmScheduler", "Alarm cancelled for: ${habit.name}")
     }
 
     private fun createPendingIntent(habit: Habit): PendingIntent {
@@ -88,14 +88,14 @@ class AlarmScheduler(private val context: Context) {
                 timeInMillis,
                 pendingIntent
             )
-            Log.d("AlarmScheduler", "Zaplanowano dokładny alarm")
+            Log.d("AlarmScheduler", "Scheduled exact alarm")
         } else {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 timeInMillis,
                 pendingIntent
             )
-            Log.w("AlarmScheduler", "Brak uprawnień do dokładnych alarmów")
+            Log.w("AlarmScheduler", "No permission granted for exact alarm")
         }
     }
 }

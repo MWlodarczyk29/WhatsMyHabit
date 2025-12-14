@@ -32,7 +32,7 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="Ustawienia"
+            android:label="@string/settings"
             android:theme="@style/Theme.WhatsMyHabit" />
 
         <receiver

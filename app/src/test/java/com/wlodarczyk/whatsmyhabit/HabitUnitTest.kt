@@ -23,12 +23,10 @@ class HabitUnitTest {
      */
     @Test
     fun `test creating new habit with default values`() {
-        // Given
         val habitName = "Trening"
         val habitTime = "08:00"
         val habitColor = HabitColor.GREEN.value
 
-        // When
         val habit = Habit(
             id = 1,
             name = habitName,
@@ -40,7 +38,6 @@ class HabitUnitTest {
             lastCompletedDate = null
         )
 
-        // Then
         assertEquals("Trening", habit.name)
         assertEquals("08:00", habit.time)
         assertFalse(habit.done)
@@ -54,7 +51,6 @@ class HabitUnitTest {
      */
     @Test
     fun `test streak increases to 1 on first completion`() {
-        // Given
         val habit = Habit(
             id = 1,
             name = "Czytanie",
@@ -64,10 +60,8 @@ class HabitUnitTest {
             lastCompletedDate = null
         )
 
-        // When
         val newStreak = habit.updateStreakOnCompletion()
 
-        // Then
         assertEquals(1, newStreak)
     }
 
@@ -76,7 +70,6 @@ class HabitUnitTest {
      */
     @Test
     fun `test streak increases when completing habit next day`() {
-        // Given
         val yesterday = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
         val habit = Habit(
             id = 1,
@@ -87,10 +80,8 @@ class HabitUnitTest {
             lastCompletedDate = yesterday
         )
 
-        // When
         val newStreak = habit.updateStreakOnCompletion()
 
-        // Then
         assertEquals(6, newStreak)
     }
 
@@ -99,7 +90,6 @@ class HabitUnitTest {
      */
     @Test
     fun `test streak resets to 1 after gap in completion`() {
-        // Given
         val threeDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(3)
         val habit = Habit(
             id = 1,
@@ -110,10 +100,8 @@ class HabitUnitTest {
             lastCompletedDate = threeDaysAgo
         )
 
-        // When
         val newStreak = habit.updateStreakOnCompletion()
 
-        // Then
         assertEquals(1, newStreak)
     }
 
@@ -122,7 +110,6 @@ class HabitUnitTest {
      */
     @Test
     fun `test habit should reset after day change`() {
-        // Given
         val yesterday = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
         val habit = Habit(
             id = 1,
@@ -132,10 +119,8 @@ class HabitUnitTest {
             lastCompletedDate = yesterday
         )
 
-        // When
         val shouldReset = habit.shouldReset()
 
-        // Then
         assertTrue("Nawyk wykonany wczoraj powinien być zresetowany", shouldReset)
     }
 }
