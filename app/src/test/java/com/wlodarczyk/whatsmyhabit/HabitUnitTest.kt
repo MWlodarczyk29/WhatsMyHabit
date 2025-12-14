@@ -7,20 +7,8 @@ import org.junit.Test
 import org.junit.Assert.*
 import java.util.concurrent.TimeUnit
 
-/**
- * Testy jednostkowe dla logiki biznesowej aplikacji ,,What's my habit?"
- * Testowane funkcjonalności:
- * - Tworzenie nawyku
- * - Logika streak (pasma dni)
- * - Reset nawyku po zmianie dnia
- * - Obliczanie streak przy różnych scenariuszach
- * - Walidacja kolorów
- */
 class HabitUnitTest {
 
-    /**
-     * Sprawdza czy nawyk jest poprawnie tworzony z domyślnymi wartościami
-     */
     @Test
     fun `test creating new habit with default values`() {
         val habitName = "Trening"
@@ -46,9 +34,6 @@ class HabitUnitTest {
         assertEquals(HabitColor.GREEN.value, habit.color)
     }
 
-    /**
-     * Sprawdza czy streak poprawnie zwiększa się do 1 przy pierwszym wykonaniu
-     */
     @Test
     fun `test streak increases to 1 on first completion`() {
         val habit = Habit(
@@ -65,9 +50,6 @@ class HabitUnitTest {
         assertEquals(1, newStreak)
     }
 
-    /**
-     * Sprawdza czy streak zwiększa się o 1 gdy wykonujemy nawyk dzień po dniu
-     */
     @Test
     fun `test streak increases when completing habit next day`() {
         val yesterday = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
@@ -85,9 +67,6 @@ class HabitUnitTest {
         assertEquals(6, newStreak)
     }
 
-    /**
-     * Sprawdza czy streak resetuje się do 1 gdy jest przerwa dłuższa niż 1 dzień
-     */
     @Test
     fun `test streak resets to 1 after gap in completion`() {
         val threeDaysAgo = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(3)
@@ -105,9 +84,6 @@ class HabitUnitTest {
         assertEquals(1, newStreak)
     }
 
-    /**
-     * Sprawdza czy nawyk powinien być zresetowany jeśli został wykonany wczoraj
-     */
     @Test
     fun `test habit should reset after day change`() {
         val yesterday = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
