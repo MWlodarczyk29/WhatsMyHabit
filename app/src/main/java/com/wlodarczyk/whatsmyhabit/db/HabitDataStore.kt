@@ -1,6 +1,7 @@
 package com.wlodarczyk.whatsmyhabit.db
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore by preferencesDataStore("habits_store")
 
 object HabitDataStore {
+    private const val TAG = "HabitDataStore"
     private val HABITS_KEY = stringPreferencesKey("habits_json")
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
@@ -27,6 +29,7 @@ object HabitDataStore {
             try {
                 prefs[HABITS_KEY]?.let { adapter.fromJson(it) ?: emptyList() } ?: emptyList()
             } catch (e: Exception) {
+                Log.e(TAG, "Error loading habits from DataStore", e)
                 emptyList()
             }
         }

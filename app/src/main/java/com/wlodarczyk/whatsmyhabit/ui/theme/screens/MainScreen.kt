@@ -58,6 +58,7 @@ import com.wlodarczyk.whatsmyhabit.utils.PermissionManager
 import com.wlodarczyk.whatsmyhabit.viewmodel.HabitsViewModel
 import kotlinx.coroutines.delay
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,12 +103,12 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
-        delay(1000)
+        delay(TimeUnit.SECONDS.toMillis(1))
         var lastCheckedDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
         var lastCheckedYear = Calendar.getInstance().get(Calendar.YEAR)
 
         while (true) {
-            delay(60000)
+            delay(TimeUnit.MINUTES.toMillis(1))
             val currentDay = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 

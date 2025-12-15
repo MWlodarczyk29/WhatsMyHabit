@@ -43,7 +43,7 @@ object NotificationUtils {
 
             notificationManager.createNotificationChannel(channel)
 
-            Log.d(TAG, "Notification chhannel updated/created: $name")
+            Log.d(TAG, "Notification channel updated/created: $name")
         }
     }
     fun showHabitNotification(context: Context, habitName: String, habitId: Int) {
